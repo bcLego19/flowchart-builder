@@ -2,7 +2,9 @@ import React, { Component } from "react";
 
 class FlowchartNode extends Component {
   render() {
-    return <div>FlowchartNode</div>;
+    return (
+      <h2>FlowchartNode</h2>
+    );
   }
 }
 

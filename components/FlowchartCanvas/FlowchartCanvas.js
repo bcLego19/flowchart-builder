@@ -2,7 +2,9 @@ import React, { Component } from "react";
 
 class FlowchartCanvas extends Component {
   render() {
-    return <div>FlowchartCanvas</div>;
+    return (
+      <h2>FlowchartCanvas</h2>
+      );
   }
 }
 
