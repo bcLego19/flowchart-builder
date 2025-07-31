@@ -1,14 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import FlowchartCanvas from './components/FlowchartCanvas';
+import Toolbar from './components/Toolbar';
+import './App.css'; // Don't forget to import your CSS!
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <h1>Flowchart Builder</h1>
-  )
+    // All JSX elements must be wrapped in a single parent element.
+    <> 
+      <h1>Flowchart Builder</h1>
+      <div>
+        <Toolbar />
+        <FlowchartCanvas />
+      </div>
+    </>
+  );
 }
 
-export default App
+export default App;
