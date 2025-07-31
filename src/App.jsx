@@ -1,5 +1,5 @@
-import FlowchartCanvas from './components/FlowchartCanvas';
-import Toolbar from './components/Toolbar';
+import FlowchartCanvas from '../components/FlowchartCanvas';
+import Toolbar from '../components/Toolbar';
 import './App.css'; // Don't forget to import your CSS!
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
     // All JSX elements must be wrapped in a single parent element.
     <> 
       <h1>Flowchart Builder</h1>
-      <div>
+      <div id="app">
         <Toolbar />
         <FlowchartCanvas />
       </div>
