@@ -18,50 +18,45 @@ const FlowchartCanvas = ({nodes}) => {
   }
 
   const handleMouseDown = (e) => {
-    // if no node being dragged, continue with canvas panning
-    if (!draggedNodeId && isPanning) {
-      setIsPanning(true);
-      setStartPan({x: e.clientX, y: e.clientY});
-      return;
-    }
-
-    // if node being dragged, update its position
-    if (draggedNodeId) {
-      // find node being dragged
-      setNodes(prevNodes => prevNodes.map(node => {
-        if (node.id === draggedNodeId) {
-
-          return {
-            ...node,
-            x: node.x + e.movementX,
-            y: node.y + e.movementY,
-          };
-
-        }
-        return node;
-
-      }));
-    }
-    
+    setIsPanning(true);
+    setStartPan({x: e.clientX, y: e.clientY});
   };
 
   const handleMouseMove = (e) => {
-    if(!isPanning) return;
+    // Panning logic: If no node is being dragged, continue with canvas panning.
+    if (!draggedNodeId && isPanning) {
+        if(!isPanning) return;
 
-    const dx = e.clientX - startPan.x;
-    const dy = e.clientY - startPan.y;
+        const dx = e.clientX - startPan.x;
+        const dy = e.clientY - startPan.y;
 
-    setPan({
-      x: pan.x + dx,
-      y: pan.y + dy
-    });
+        setPan({
+          x: pan.x + dx,
+          y: pan.y + dy
+        });
 
-    setStartPan({x: e.clientX, y: e.clientY});
+        setStartPan({x: e.clientX, y: e.clientY});
+        return;
+    }
+
+    // Node dragging logic: If a node is being dragged, update its position.
+    if (draggedNodeId) {
+        // Find the node being dragged
+        setNodes(prevNodes => prevNodes.map(node => {
+            if (node.id === draggedNodeId) {
+                return {
+                    ...node,
+                    x: node.x + e.movementX, // movementX and Y are great for this
+                    y: node.y + e.movementY
+                };
+            }
+            return node;
+        }));
+    }
   };
 
   const handleMouseUp = () => {
     setIsPanning(false);
-    setDraggedNodeId(null);
   };
 
   return (
