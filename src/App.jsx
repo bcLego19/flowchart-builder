@@ -17,7 +17,7 @@ function App() {
       <h1>Flowchart Builder</h1>
       <div id="app">
         <Toolbar />
-        <FlowchartCanvas nodes={nodes}/>
+        <FlowchartCanvas nodes={nodes} setNodes={setNodes}/>
       </div>
     </>
   );
