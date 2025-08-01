@@ -1,4 +1,4 @@
-const FlowchartNode = ({id, x, y, text}) => {
+const FlowchartNode = ({id, x, y, text, onMouseDown}) => {
   return (
     <div
       style={{
