@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react'
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 
-const FlowchartCanvas = ({nodes}) => {
+const FlowchartCanvas = ({nodes, setNodes}) => {
   // state to store canvas position
   const [pan, setPan] = useState({x:0, y:0});
   // State to track if mouse is down for dragging
@@ -57,6 +57,7 @@ const FlowchartCanvas = ({nodes}) => {
 
   const handleMouseUp = () => {
     setIsPanning(false);
+    setDraggedNodeId(null);
   };
 
   return (
