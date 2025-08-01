@@ -1,86 +1,97 @@
 // src/components/FlowchartCanvas.jsx
-import { useState, useRef } from 'react'
+import { useState } from 'react';
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 
-const FlowchartCanvas = ({nodes, setNodes}) => {
-  // state to store canvas position
-  const [pan, setPan] = useState({x:0, y:0});
-  // State to track if mouse is down for dragging
+const FlowchartCanvas = ({ nodes, setNodes }) => {
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
-  // state to store starting position of mouse when drag begins
-  const [startPan, setStartPan] = useState({x:0, y:0});
-  // state and handlers for dragging nodes
   const [draggedNodeId, setDraggedNodeId] = useState(null);
+  const [offset, setOffset] = useState({x:0, y:0});
+  const [startMouse, setStartMouse] = useState({x:0, y:0});
 
-  const handleNodeMouseDown = (e, nodeId) => {
+  const handleNodeMouseDown = (e, nodeId, nodeX, nodeY) => {
     e.stopPropagation();
     setDraggedNodeId(nodeId);
-  }
+    setStartMouse({ x: e.clientX, y: e.clientY });
+  };
 
   const handleMouseDown = (e) => {
-    setIsPanning(true);
-    setStartPan({x: e.clientX, y: e.clientY});
+    if (e.target === e.currentTarget) {
+      setIsPanning(true);
+      setStartMouse({x: e.clientX, y: e.clientY });
+    }
   };
 
   const handleMouseMove = (e) => {
-    // Panning logic: If no node is being dragged, continue with canvas panning.
-    if (!draggedNodeId && isPanning) {
-        if(!isPanning) return;
-
-        const dx = e.clientX - startPan.x;
-        const dy = e.clientY - startPan.y;
-
-        setPan({
-          x: pan.x + dx,
-          y: pan.y + dy
-        });
-
-        setStartPan({x: e.clientX, y: e.clientY});
-        return;
+    // Panning Logic
+    if (isPanning) {
+      const dx = e.clientX - startMouse.x;
+      const dy = e.clientY - startMouse.y;
+      setPan(prevPan => ({
+        x: prevPan.x + dx,
+        y: prevPan.y + dy
+      }));
+      setStartMouse({ x: e.clientX, y: e.clientY }); // Update startMouse
     }
-
-    // Node dragging logic: If a node is being dragged, update its position.
-    if (draggedNodeId) {
-        // Find the node being dragged
-        setNodes(prevNodes => prevNodes.map(node => {
-            if (node.id === draggedNodeId) {
-                return {
-                    ...node,
-                    x: node.x + e.movementX, // movementX and Y are great for this
-                    y: node.y + e.movementY
-                };
-            }
-            return node;
-        }));
+    // Node dragging logic
+    else if (draggedNodeId) {
+      const dx = e.clientX - startMouse.x;
+      const dy = e.clientY - startMouse.y;
+      setNodes(prevNodes => prevNodes.map(node => {
+        if (node.id === draggedNodeId) {
+          return {
+            ...node,
+            x: node.x + dx,
+            y: node.y + dy,
+          };
+        }
+        return node;
+      }));
+      setStartMouse({ x: e.clientX, y: e.clientY }); // Update startMouse
     }
   };
 
   const handleMouseUp = () => {
     setIsPanning(false);
-    setDraggedNodeId(null);
+    setDraggedNodeId(null); // Critical to reset this state on mouse up
   };
 
   return (
     <div
+      // This div is the main container, it does NOT have a transform
       style={{
         width: '100%',
-        height: '100%',
-        backgroundColor: 'lightgray',
-        cursor: isPanning ? 'grabbing' : 'grab',
-        transform: `translate(${pan.x}px, ${pan.y}px)`,
+        height: '100vh',
         position: 'relative',
+        overflow: 'hidden',
       }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          setIsPanning(true);
+        }
+      }}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      {nodes.map(node => (<FlowchartNode
+      <div
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'lightgray',
+          transform: `translate(${pan.x}px, ${pan.y}px)`,
+          cursor: isPanning ? 'grabbing' : 'grab',
+        }}
+        onMouseDown={handleMouseDown}
+      />
+      {nodes.map(node => (
+        <FlowchartNode
           key={node.id}
           id={node.id}
-          x={node.x}
-          y={node.y}
+          x={node.x + pan.x}
+          y={node.y + pan.y}
           text={node.text}
-          onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+          onMouseDown={(e) => handleNodeMouseDown(e, node.id, node.x, node.y)}
         />
       ))}
     </div>
