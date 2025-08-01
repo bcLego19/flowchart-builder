@@ -1,7 +1,8 @@
 // src/components/FlowchartCanvas.jsx
 import { useState, useRef } from 'react'
+import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 
-const FlowchartCanvas = () => {
+const FlowchartCanvas = ({nodes}) => {
   // state to store canvas position
   const [pan, setPan] = useState({x:0, y:0});
   // State to track if mouse is down for dragging
@@ -46,7 +47,14 @@ const FlowchartCanvas = () => {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      <h2>FlowchartCanvas (Pan around me!)</h2>
+      {nodes.map(node => (<FlowchartNode
+          key={node.id}
+          id={node.id}
+          x={node.x}
+          y={node.y}
+          text={node.text}
+        />
+      ))}
     </div>
   );
 };
