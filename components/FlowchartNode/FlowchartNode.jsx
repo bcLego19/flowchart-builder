@@ -14,6 +14,7 @@ const FlowchartNode = ({id, x, y, text}) => {
         textAlign: 'center',
         cursor: 'grab', 
       }}
+      onMouseDown={onMouseDown}
     >
       <h2>{text}</h2>
     </div>
