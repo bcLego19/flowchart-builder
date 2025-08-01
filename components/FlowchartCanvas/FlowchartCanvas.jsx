@@ -9,10 +9,40 @@ const FlowchartCanvas = ({nodes}) => {
   const [isPanning, setIsPanning] = useState(false);
   // state to store starting position of mouse when drag begins
   const [startPan, setStartPan] = useState({x:0, y:0});
+  // state and handlers for dragging nodes
+  const [draggedNodeId, setDraggedNodeId] = useState(null);
+
+  const handleNodeMouseDown = (e, nodeId) => {
+    e.stopPropagation();
+    setDraggedNodeId(nodeId);
+  }
 
   const handleMouseDown = (e) => {
-    setIsPanning(true);
-    setStartPan({x: e.clientX, y: e.clientY});
+    // if no node being dragged, continue with canvas panning
+    if (!draggedNodeId && isPanning) {
+      setIsPanning(true);
+      setStartPan({x: e.clientX, y: e.clientY});
+      return;
+    }
+
+    // if node being dragged, update its position
+    if (draggedNodeId) {
+      // find node being dragged
+      setNodes(prevNodes => prevNodes.map(node => {
+        if (node.id === draggedNodeId) {
+
+          return {
+            ...node,
+            x: node.x + e.movementX,
+            y: node.y + e.movementY,
+          };
+
+        }
+        return node;
+
+      }));
+    }
+    
   };
 
   const handleMouseMove = (e) => {
@@ -31,6 +61,7 @@ const FlowchartCanvas = ({nodes}) => {
 
   const handleMouseUp = () => {
     setIsPanning(false);
+    setDraggedNodeId(null);
   };
 
   return (
@@ -53,6 +84,7 @@ const FlowchartCanvas = ({nodes}) => {
           x={node.x}
           y={node.y}
           text={node.text}
+          onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
         />
       ))}
     </div>
