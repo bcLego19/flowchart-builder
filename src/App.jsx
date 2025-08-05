@@ -24,10 +24,12 @@ function App() {
 
   return (
     // All JSX elements must be wrapped in a single parent element.
-    <> 
-      <h1>Flowchart Builder</h1>
+    <>
       <div id="app">
-        <Toolbar createNode={createNode}/>
+        <div className="sidebar">
+          <h1>Flowchart Builder</h1>
+          <Toolbar createNode={createNode}/>
+        </div>
         <FlowchartCanvas nodes={nodes} setNodes={setNodes}/>
       </div>
     </>
