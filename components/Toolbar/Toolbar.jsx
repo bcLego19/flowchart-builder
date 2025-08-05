@@ -1,8 +1,11 @@
-const Toolbar = () => {
+// components/Toolbar/Toolbar.jsx
+
+// The toolbar component, which accepts a createNode property
+const Toolbar = ({createNode}) => {
   return (
     <div>
       <h2>Toolbar</h2>
-      <button onclick="">Add</button>
+      <button onClick={createNode()}>Add</button>
     </div>
   );
 };
