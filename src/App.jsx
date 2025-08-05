@@ -11,6 +11,17 @@ function App() {
     {id: 'start-node', x: 200, y: 150, text: 'Start'}
   ])
 
+  // handler for creating a new node
+  const createNode = () => {
+    const newNode = {
+      id: `node-${Date.now()}`,
+      x: 400, // default position
+      y: 200,
+      text: 'New Node',
+    };
+    setNodes(prevNodes => [...prevNodes, newNode]);
+  }
+
   return (
     // All JSX elements must be wrapped in a single parent element.
     <> 
