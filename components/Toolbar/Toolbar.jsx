@@ -1,4 +1,5 @@
 // components/Toolbar/Toolbar.jsx
+import './Toolbar.css';
 
 // The toolbar component, which accepts a createNode property
 const Toolbar = ({createNode}) => {
