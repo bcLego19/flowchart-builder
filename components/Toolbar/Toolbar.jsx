@@ -4,8 +4,8 @@
 const Toolbar = ({createNode}) => {
   return (
     <div>
-      <h2>Toolbar</h2>
-      <button onClick={createNode}>Add</button>
+      <h2 className="toolbar">Toolbar</h2>
+      <button className="add-node-btn" onClick={createNode}>Add</button>
     </div>
   );
 };
