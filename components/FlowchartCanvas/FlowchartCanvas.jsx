@@ -8,6 +8,7 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
   const [draggedNodeId, setDraggedNodeId] = useState(null);
   const [offset, setOffset] = useState({x:0, y:0});
   const [startMouse, setStartMouse] = useState({x:0, y:0});
+  const [tempConnection, setTempConnection] = useState(null);
 
   const handleNodeMouseDown = (e, nodeId, nodeX, nodeY) => {
     e.stopPropagation();
@@ -59,8 +60,17 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
   const handleConnectionMouseDown = (e, id) => {
     e.stopPropagation();
 
+    const sourceNode = nodes.find(n => n.id === nodeId);
+    setTempConnection([
+      sourceId: nodeId,
+      x1: sourceNode.x + 60,
+      y1: sourceNode.y + 45,
+      x2: e.clientX - pan.x,
+      y2: e.clientY - pan.y,
+    ]);
+
     console.log(`Connection point clicked on node: (${id})`);
-  }
+  };
 
   return (
     <div
