@@ -9,6 +9,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
   const [offset, setOffset] = useState({x:0, y:0});
   const [startMouse, setStartMouse] = useState({x:0, y:0});
   const [tempConnection, setTempConnection] = useState(null);
+  const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
   const svgRef = useRef(null);
 
   const handleNodeMouseDown = (e, nodeId, nodeX, nodeY) => {
