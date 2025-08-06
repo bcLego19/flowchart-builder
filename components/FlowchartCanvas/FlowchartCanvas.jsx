@@ -56,10 +56,10 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
     setDraggedNodeId(null); // Critical to reset this state on mouse up
   };
 
-  const handleConnectionMouseDown = (e) => {
+  const handleConnectionMouseDown = (e, id) => {
     e.stopPropagation();
 
-    cosnole.log(`Connection point clicked on node: (${id})`);
+    console.log(`Connection point clicked on node: (${id})`);
   }
 
   return (
