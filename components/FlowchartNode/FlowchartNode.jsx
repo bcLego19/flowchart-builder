@@ -3,12 +3,6 @@ import './FlowchartNode.css';
 
 const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown}) => {
 
-  const handleConnectionMouseDown = (e) => {
-    e.stopPropagation();
-
-    cosnole.log(`Connection point clicked on node: (${id})`);
-  }
-
   return (
     <div
       className="flowchart-node"
