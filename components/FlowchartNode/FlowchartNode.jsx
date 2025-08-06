@@ -1,7 +1,7 @@
 
 import './FlowchartNode.css';
 
-const FlowchartNode = ({id, x, y, text, onMouseDown}) => {
+const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown}) => {
 
   const handleConnectionMouseDown = (e) => {
     e.stopPropagation();
@@ -18,7 +18,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown}) => {
       <h2>{text}</h2>
       <div
         className="connection-point"
-        onMouseDown={handleConnectionMouseDown}
+        onMouseDown={(e) => handleConnectionMouseDown(e, id)}
       />
     </div>
   );

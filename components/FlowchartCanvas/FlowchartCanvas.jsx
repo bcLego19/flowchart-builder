@@ -56,6 +56,12 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
     setDraggedNodeId(null); // Critical to reset this state on mouse up
   };
 
+  const handleConnectionMouseDown = (e) => {
+    e.stopPropagation();
+
+    cosnole.log(`Connection point clicked on node: (${id})`);
+  }
+
   return (
     <div
       // This div is the main container, it does NOT have a transform
@@ -92,6 +98,7 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
           y={node.y + pan.y}
           text={node.text}
           onMouseDown={(e) => handleNodeMouseDown(e, node.id, node.x, node.y)}
+          handleConnectionMouseDown={handleConnectionMouseDown}
         />
       ))}
     </div>
