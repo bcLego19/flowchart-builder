@@ -10,6 +10,7 @@ function App() {
   const [nodes, setNodes] = useState([
     {id: 'start-node', x: 200, y: 150, text: 'Start'}
   ])
+  const [connections, setConnections] = useState([]);
 
   // handler for creating a new node
   const createNode = () => {
