@@ -49,6 +49,12 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
         return node;
       }));
       setStartMouse({ x: e.clientX, y: e.clientY }); // Update startMouse
+    } else if (tempConnection) {
+      setTempConnection(prev => ({
+        ...prev,
+        x2: e.clientX - pan.x,
+        y2: e.clientY - pan.y,
+      }));
     }
   };
 
@@ -60,14 +66,14 @@ const FlowchartCanvas = ({ nodes, setNodes }) => {
   const handleConnectionMouseDown = (e, id) => {
     e.stopPropagation();
 
-    const sourceNode = nodes.find(n => n.id === nodeId);
-    setTempConnection([
-      sourceId: nodeId,
+    const sourceNode = nodes.find(n => n.id === id);
+    setTempConnection({
+      sourceId: id,
       x1: sourceNode.x + 60,
       y1: sourceNode.y + 45,
       x2: e.clientX - pan.x,
       y2: e.clientY - pan.y,
-    ]);
+    });
 
     console.log(`Connection point clicked on node: (${id})`);
   };
