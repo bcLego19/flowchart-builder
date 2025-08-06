@@ -12,14 +12,18 @@
 
 .connection-point {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    left: 0;
-    top: 0;
+    width: 15px;
+    height: 15px;
+    left: 50%;
+    bottom: -10px;
+    transform: translateX(-50%);
     background-color: #cccccc;
     border: 2px solid black;
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-    text-align: center;
+    border-radius: 50%;
     cursor: pointer;
+    z-index: 10;
+}
+
+.connection-point:hover {
+    background-color: #666666;
 }
