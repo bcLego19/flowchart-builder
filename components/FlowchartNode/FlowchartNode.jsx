@@ -6,6 +6,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown})
   return (
     <div
       className="flowchart-node"
+      id={id}
       style={{ left: x, top: y }}
       onMouseDown={onMouseDown}
     >
