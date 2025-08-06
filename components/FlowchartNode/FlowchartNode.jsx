@@ -9,6 +9,11 @@ const FlowchartNode = ({id, x, y, text, onMouseDown}) => {
       onMouseDown={onMouseDown}
     >
       <h2>{text}</h2>
+      <div
+        className="connection-point"
+      >
+        
+      </div>
     </div>
   );
 };
