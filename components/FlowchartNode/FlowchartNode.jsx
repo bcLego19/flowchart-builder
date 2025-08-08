@@ -1,11 +1,13 @@
 
 import './FlowchartNode.css';
 
-const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown}) => {
+const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected}) => {
+  // use classnames library or a simple template literal
+  const nodeClasses = `flowchart-node ${isSelected ? 'selected-for-connection' : ''}`;
 
   return (
     <div
-      className="flowchart-node"
+      className={nodeClasses}
       tabIndex={0}
       id={id}
       style={{ left: x, top: y }}

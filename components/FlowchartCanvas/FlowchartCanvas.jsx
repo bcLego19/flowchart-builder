@@ -209,6 +209,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
           onMouseDown={(e) => handleNodeMouseDown(e, node.id, node.x, node.y)}
           handleConnectionMouseDown={handleConnectionMouseDown}
           handleNodeKeyDown={handleNodeKeyDown}
+          isSelected={selectedConnectionSource === node.id}
         />
       ))}
     </div>

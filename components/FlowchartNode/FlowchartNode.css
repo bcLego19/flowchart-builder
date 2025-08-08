@@ -1,3 +1,5 @@
+/* FlowchartNode.css */
+
 .flowchart-node {
 	position: absolute;
     width: 120px;
@@ -8,6 +10,11 @@
     box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
     text-align: center;
     cursor: grab; 
+}
+
+.flowchart-node.selected-for-connection {
+  box-shadow: 0 0 15px 5px rgba(0, 123, 255, 0.7); /* A blue glow */
+  border-color: #007bff; /* A blue border */
 }
 
 .connection-point {
