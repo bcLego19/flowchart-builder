@@ -12,6 +12,32 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
   const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
   const svgRef = useRef(null);
 
+  const handleNodeKeyDown = (e, id) => {
+    console.log(`Key pressed on node ${id}: `, e.key);
+
+    if(e.key === 'Enter') {
+      e.preventDefault();
+
+      if(selectedConnectionSource === id) {
+        // if same node selected again, deselect it
+        setSelectedConnectionSource(null);
+      } else if (selectedConnectionSource) {
+        // if source already selected, create new connection to this node
+        const newConnection = {
+          id: `conn-${Date.now()}`,
+          source: selectedConnectionSource,
+          target: id,
+        };
+        setConnections(prev => [...prev, newConnection]);
+        setSelectedConnectionSource(null);
+      } else { // set the selected connection source
+        setSelectedConnectionSource(id);
+      }
+    }
+
+    console.log(`Selected Source: ${selectedConnectionSource}`)
+  };
+
   const handleNodeMouseDown = (e, nodeId, nodeX, nodeY) => {
     e.stopPropagation();
     setDraggedNodeId(nodeId);
@@ -182,6 +208,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
           text={node.text}
           onMouseDown={(e) => handleNodeMouseDown(e, node.id, node.x, node.y)}
           handleConnectionMouseDown={handleConnectionMouseDown}
+          handleNodeKeyDown={handleNodeKeyDown}
         />
       ))}
     </div>

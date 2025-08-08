@@ -1,7 +1,7 @@
 
 import './FlowchartNode.css';
 
-const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown}) => {
+const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown}) => {
 
   return (
     <div
@@ -10,6 +10,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown})
       id={id}
       style={{ left: x, top: y }}
       onMouseDown={onMouseDown}
+      onKeyDown={(e) => handleNodeKeyDown(e, id)}
     >
       <h2>{text}</h2>
       <div
