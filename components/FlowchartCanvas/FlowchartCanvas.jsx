@@ -1,6 +1,7 @@
 // src/components/FlowchartCanvas.jsx
 import { useState, useRef } from 'react';
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
+import Connection from '../Connection/Connection.jsx';
 
 const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -11,6 +12,12 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
   const [tempConnection, setTempConnection] = useState(null);
   const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
   const svgRef = useRef(null);
+
+  const handleCanvasKeyDown = (e) => {
+    if(e.key === 'Escape' && selectedConnectionSource) {
+      setSelectedConnectionSource(null);
+    }
+  };
 
   const handleNodeKeyDown = (e, id) => {
     console.log(`Key pressed on node ${id}: `, e.key);
@@ -156,14 +163,20 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
           cursor: isPanning ? 'grabbing' : 'grab',
         }}
         onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        tabIndex={0}
       />
-      <svg style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-      }}>
+      <svg 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+        }}
+        onKeyDown={handleCanvasKeyDown}
+      >
       {/* Render permanent connections */}
       {
         connections.map( conn => {
@@ -174,14 +187,14 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
         // only render if both nodes exist
         if (sourceNode && targetNode) {
           return (
-              <line
+              <Connection
                 key={conn.id}
+                id={conn.id}
                 x1={sourceNode.x + 60 + pan.x} // Center of the source node
                 y1={sourceNode.y + 45 + pan.y} // Bottom of the source node
                 x2={targetNode.x + 60 + pan.x} // Center of the target node
                 y2={targetNode.y + 45 + pan.y} // Bottom of the target node
-                stroke="black"
-                strokeWidth="2"
+                setConnections={setConnections}
                 />
             );
         }
@@ -206,6 +219,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
           x={node.x + pan.x}
           y={node.y + pan.y}
           text={node.text}
+          tabIndex={0}
           onMouseDown={(e) => handleNodeMouseDown(e, node.id, node.x, node.y)}
           handleConnectionMouseDown={handleConnectionMouseDown}
           handleNodeKeyDown={handleNodeKeyDown}
