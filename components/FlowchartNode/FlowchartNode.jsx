@@ -1,7 +1,8 @@
-
+// FlowchartNode.jsx file
 import './FlowchartNode.css';
 
-const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected}) => {
+const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
+                        handleBlur}) => {
   // use classnames library or a simple template literal
   const nodeClasses = `flowchart-node ${isSelected ? 'selected-for-connection' : ''}`;
 
@@ -13,8 +14,21 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
       style={{ left: x, top: y }}
       onMouseDown={onMouseDown}
       onKeyDown={(e) => handleNodeKeyDown(e, id)}
+      onDoubleClick={() => handleDoubleClick(id)}
     >
-      <h2>{text}</h2>
+      {
+        isEditing ? (
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => handleNodeTextChange(id, e.target.value)}
+            onBlur={handleBlur}
+            autoFocus
+            />
+          ) : (
+            <h2>{text}</h2>
+          )
+      }
       <div
         className="connection-point"
         tabIndex={0}

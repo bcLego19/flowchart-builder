@@ -12,6 +12,21 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
   const [tempConnection, setTempConnection] = useState(null);
   const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
   const svgRef = useRef(null);
+  const [editingNodeId, setEditingNodeId] = useState(null);
+
+  const handleBlur = (nodeId) => {
+    setEditingNodeId(null);
+  }
+
+  const handleNodeTextChange = (id, newText) => {
+    setNodes(prevNodes => prevNodes.map(node =>
+      node.id === id ? {...node, text: newText} : node
+    ));
+  };
+
+  const handleDoubleClick = (nodeId) => {
+    setEditingNodeId(nodeId);
+  }
 
   const handleCanvasKeyDown = (e) => {
     if(e.key === 'Escape' && selectedConnectionSource) {
@@ -224,6 +239,10 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
           handleConnectionMouseDown={handleConnectionMouseDown}
           handleNodeKeyDown={handleNodeKeyDown}
           isSelected={selectedConnectionSource === node.id}
+          isEditing={editingNodeId === node.id}
+          handleNodeTextChange={handleNodeTextChange}
+          handleDoubleClick={handleDoubleClick}
+          handleBlur={handleBlur}
         />
       ))}
     </div>
