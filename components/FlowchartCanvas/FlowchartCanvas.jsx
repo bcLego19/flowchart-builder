@@ -1,252 +1,281 @@
 // src/components/FlowchartCanvas.jsx
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 import Connection from '../Connection/Connection.jsx';
+import ContextMenu from '../ContextMenu/ContextMenu.jsx';
 
 const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [draggedNodeId, setDraggedNodeId] = useState(null);
-  const [offset, setOffset] = useState({x:0, y:0});
-  const [startMouse, setStartMouse] = useState({x:0, y:0});
-  const [tempConnection, setTempConnection] = useState(null);
-  const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
-  const svgRef = useRef(null);
-  const [editingNodeId, setEditingNodeId] = useState(null);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+    const [draggedNodeId, setDraggedNodeId] = useState(null);
+    const [startMouse, setStartMouse] = useState({x:0, y:0});
+    const [tempConnection, setTempConnection] = useState(null);
+    const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
+    const [editingNodeId, setEditingNodeId] = useState(null);
+    const [contextMenu, setContextMenu] = useState({visible: false, x: 0, y: 0, nodeId: null});
 
-  const handleBlur = (nodeId) => {
-    setEditingNodeId(null);
-  }
+    const canvasRef = useRef(null);
 
-  const handleNodeTextChange = (id, newText) => {
-    setNodes(prevNodes => prevNodes.map(node =>
-      node.id === id ? {...node, text: newText} : node
-    ));
-  };
+    const handleDeleteNode = useCallback((nodeId) => {
+        setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId));
+        setConnections(prevConnections =>
+            prevConnections.filter(conn =>
+                conn.source !== nodeId && conn.target !== nodeId
+            )
+        );
+        setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
+    }, [setNodes, setConnections]);
 
-  const handleDoubleClick = (nodeId) => {
-    setEditingNodeId(nodeId);
-  }
-
-  const handleCanvasKeyDown = (e) => {
-    if(e.key === 'Escape' && selectedConnectionSource) {
-      setSelectedConnectionSource(null);
-    }
-  };
-
-  const handleNodeKeyDown = (e, id) => {
-    console.log(`Key pressed on node ${id}: `, e.key);
-
-    if(e.key === 'Enter') {
-      e.preventDefault();
-
-      if(selectedConnectionSource === id) {
-        // if same node selected again, deselect it
+    // New handler to clear all selections
+    const handleClearSelection = (e) => {
+        setDraggedNodeId(null);
         setSelectedConnectionSource(null);
-      } else if (selectedConnectionSource) {
-        // if source already selected, create new connection to this node
-        const newConnection = {
-          id: `conn-${Date.now()}`,
-          source: selectedConnectionSource,
-          target: id,
-        };
-        setConnections(prev => [...prev, newConnection]);
-        setSelectedConnectionSource(null);
-      } else { // set the selected connection source
-        setSelectedConnectionSource(id);
-      }
-    }
+        setEditingNodeId(null);
+        setTempConnection(null);
+        setContextMenu(prev => ({ ...prev, visible: false }));
+    };
 
-    console.log(`Selected Source: ${selectedConnectionSource}`)
-  };
+    const handleContextMenu = (e, nodeId) => {
+        e.preventDefault();
+        setContextMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId,
+        });
+    };
 
-  const handleNodeMouseDown = (e, nodeId, nodeX, nodeY) => {
-    e.stopPropagation();
-    setDraggedNodeId(nodeId);
-    setStartMouse({ x: e.clientX, y: e.clientY });
-  };
+    const handleNodeTextChange = (id, newText) => {
+        setNodes(prevNodes => prevNodes.map(node =>
+            node.id === id ? {...node, text: newText} : node
+        ));
+    };
 
-  const handleMouseDown = (e) => {
-    if (e.target === e.currentTarget) {
-      setIsPanning(true);
-      setStartMouse({x: e.clientX, y: e.clientY });
-    }
-  };
+    const handleDoubleClick = (nodeId) => {
+        setEditingNodeId(nodeId);
+    };
 
-  const handleMouseMove = (e) => {
-    // Panning Logic
-    if (isPanning) {
-      const dx = e.clientX - startMouse.x;
-      const dy = e.clientY - startMouse.y;
-      setPan(prevPan => ({
-        x: prevPan.x + dx,
-        y: prevPan.y + dy
-      }));
-      setStartMouse({ x: e.clientX, y: e.clientY }); // Update startMouse
-    }
-    // Node dragging logic
-    else if (draggedNodeId) {
-      const dx = e.clientX - startMouse.x;
-      const dy = e.clientY - startMouse.y;
-      setNodes(prevNodes => prevNodes.map(node => {
-        if (node.id === draggedNodeId) {
-          return {
-            ...node,
-            x: node.x + dx,
-            y: node.y + dy,
-          };
+    const handleCanvasKeyDown = (e) => {
+        if(e.key === 'Escape') {
+            setSelectedConnectionSource(null);
         }
-        return node;
-      }));
-      setStartMouse({ x: e.clientX, y: e.clientY }); // Update startMouse
-    } else if (tempConnection) {
-      setTempConnection(prev => ({
-        ...prev,
-        x2: e.clientX - pan.x,
-        y2: e.clientY - pan.y,
-      }));
-    }
-  };
+    };
 
-  const handleMouseUp = (e) => {
-    // logic for handling a connection
-    if (tempConnection) {
-      // find element under cursor
-      const elementsUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
-      const targetNodeElement = elementsUnderCursor.find(el => el.classList.contains('connection-point'));
-      
-      // if target connection point found and not the same as source,
-      if(targetNodeElement) {
-        // retrieve node id from DOM's data attribute
-        const targetId = targetNodeElement.parentElement.id;
-
-        if(targetId && targetId !== tempConnection.sourceId) {
-          const newConnection = {
-            id: `conn-${Date.now()}`,
-            source: tempConnection.sourceId,
-            target: targetId,
-          };
-          setConnections(prev => [...prev, newConnection])
+    const handleNodeKeyDown = (e, id) => {
+        if(e.key === 'Enter') {
+            e.preventDefault();
+            if(selectedConnectionSource === id) {
+                setSelectedConnectionSource(null);
+            } else if (selectedConnectionSource) {
+                const newConnection = {
+                    id: `conn-${Date.now()}`,
+                    source: selectedConnectionSource,
+                    target: id,
+                };
+                setConnections(prev => [...prev, newConnection]);
+                setSelectedConnectionSource(null);
+            } else {
+                setSelectedConnectionSource(id);
+            }
         }
-      }
+    };
 
-      setTempConnection(null);
-    }
-    setIsPanning(false);
-    setDraggedNodeId(null); // Critical to reset this state on mouse up
-  };
-
-  const handleConnectionMouseDown = (e, id) => {
-    e.stopPropagation();
-
-    const sourceNode = nodes.find(n => n.id === id);
-    setTempConnection({
-      sourceId: id,
-      x1: sourceNode.x + 60 + pan.x,
-      y1: sourceNode.y + 45 + pan.y,
-      x2: e.clientX,
-      y2: e.clientY,
-    });
-
-    console.log(`Connection point clicked on node: (${id})`);
-  };
-
-  return (
-    <div
-      // This div is the main container, it does NOT have a transform
-      style={{
-        width: '100%',
-        height: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          setIsPanning(true);
+    // Re-implemented mouse event handlers to work with the canvas div
+    const handleMouseDown = (e) => {
+        if (e.button === 0) { // Left-click
+            // If the target is the canvas background, start panning
+            if (e.target.id === 'flowchart-canvas-div') {
+                setIsPanning(true);
+                setStartMouse({x: e.clientX, y: e.clientY });
+            }
+            // Clear any selections on a left-click on the canvas
+            setSelectedConnectionSource(null);
+            setEditingNodeId(null);
+            setContextMenu(prev => ({ ...prev, visible: false }));
         }
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'lightgray',
-          transform: `translate(${pan.x}px, ${pan.y}px)`,
-          cursor: isPanning ? 'grabbing' : 'grab',
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        tabIndex={0}
-      />
-      <svg 
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-        }}
-        onKeyDown={handleCanvasKeyDown}
-      >
-      {/* Render permanent connections */}
-      {
-        connections.map( conn => {
+    };
+    
+    // Node-specific handler
+    const handleNodeMouseDown = (e, nodeId) => {
+        if (e.button === 0) {
+            e.stopPropagation(); // Stop propagation for left-clicks on nodes
+            setDraggedNodeId(nodeId);
+            setStartMouse({ x: e.clientX, y: e.clientY });
+        }
+    };
 
-        const sourceNode = nodes.find(n => n.id === conn.source);
-        const targetNode = nodes.find(n => n.id === conn.target);
+    const handleMouseMove = (e) => {
+        if (isPanning) {
+            const dx = e.clientX - startMouse.x;
+            const dy = e.clientY - startMouse.y;
+            setPan(prevPan => ({
+                x: prevPan.x + dx,
+                y: prevPan.y + dy
+            }));
+            setStartMouse({ x: e.clientX, y: e.clientY });
+        } else if (draggedNodeId) {
+            const dx = e.clientX - startMouse.x;
+            const dy = e.clientY - startMouse.y;
+            setNodes(prevNodes => prevNodes.map(node => {
+                if (node.id === draggedNodeId) {
+                    return {
+                        ...node,
+                        x: node.x + dx,
+                        y: node.y + dy,
+                    };
+                }
+                return node;
+            }));
+            setStartMouse({ x: e.clientX, y: e.clientY });
+        } else if (tempConnection) {
+            setTempConnection(prev => ({
+                ...prev,
+                x2: e.clientX - pan.x,
+                y2: e.clientY - pan.y,
+            }));
+        }
+    };
 
-        // only render if both nodes exist
-        if (sourceNode && targetNode) {
-          return (
-              <Connection
-                key={conn.id}
-                id={conn.id}
-                x1={sourceNode.x + 60 + pan.x} // Center of the source node
-                y1={sourceNode.y + 45 + pan.y} // Bottom of the source node
-                x2={targetNode.x + 60 + pan.x} // Center of the target node
-                y2={targetNode.y + 45 + pan.y} // Bottom of the target node
-                setConnections={setConnections}
+    const handleMouseUp = (e) => {
+        // Finalize connection logic
+        if (tempConnection) {
+            const elementsUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
+            const targetNodeElement = elementsUnderCursor.find(el => el.classList.contains('connection-point'));
+            
+            if(targetNodeElement) {
+                const targetId = targetNodeElement.parentElement.id;
+                if(targetId && targetId !== tempConnection.sourceId) {
+                    const newConnection = {
+                        id: `conn-${Date.now()}`,
+                        source: tempConnection.sourceId,
+                        target: targetId,
+                    };
+                    setConnections(prev => [...prev, newConnection])
+                }
+            }
+            setTempConnection(null);
+        }
+        setIsPanning(false);
+        setDraggedNodeId(null);
+    };
+
+    const handleConnectionMouseDown = (e, id) => {
+        e.stopPropagation();
+        const sourceNode = nodes.find(n => n.id === id);
+        setTempConnection({
+            sourceId: id,
+            x1: sourceNode.x + 60,
+            y1: sourceNode.y + 45,
+            x2: e.clientX - pan.x,
+            y2: e.clientY - pan.y,
+        });
+    };
+
+    // The onClick handler for the outer div
+    const handleOuterDivClick = (e) => {
+        // If the click target is NOT a child of a node, a connection point, or the context menu, deselect everything.
+        if (!e.target.closest('.flowchart-node') && !e.target.closest('.context-menu')) {
+            setSelectedConnectionSource(null);
+        }
+    };
+
+    return (
+        <div
+            id="flowchart-canvas-outer-div"
+            style={{
+                width: '100%',
+                height: '100vh',
+                position: 'relative',
+                overflow: 'hidden',
+            }}
+            onClick={handleOuterDivClick} // Use this for clearing selections
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp} // Good practice to reset state if mouse leaves the canvas
+        >
+            {contextMenu.visible && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    nodeId={contextMenu.nodeId}
+                    handleDeleteNode={handleDeleteNode}
                 />
-            );
-        }
-
-      })}
-      {/* conditionally render only if tempConnection exists */}
-      { tempConnection && (
-        <line
-          x1 = {tempConnection.x1 + pan.x}
-          y1 = {tempConnection.y1 + pan.y}
-          x2 = {tempConnection.x2}
-          y2 = {tempConnection.y2}
-          stroke="black"
-          strokeWidth="2"
-        />)
-      }
-      </svg>
-      {nodes.map(node => (
-        <FlowchartNode
-          key={node.id}
-          id={node.id}
-          x={node.x + pan.x}
-          y={node.y + pan.y}
-          text={node.text}
-          tabIndex={0}
-          onMouseDown={(e) => handleNodeMouseDown(e, node.id, node.x, node.y)}
-          handleConnectionMouseDown={handleConnectionMouseDown}
-          handleNodeKeyDown={handleNodeKeyDown}
-          isSelected={selectedConnectionSource === node.id}
-          isEditing={editingNodeId === node.id}
-          handleNodeTextChange={handleNodeTextChange}
-          handleDoubleClick={handleDoubleClick}
-          handleBlur={handleBlur}
-        />
-      ))}
-    </div>
-  );
+            )}
+            <div
+                id='flowchart-canvas-div'
+                style={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'lightgray',
+                    transform: `translate(${pan.x}px, ${pan.y}px)`,
+                    cursor: isPanning ? 'grabbing' : 'grab',
+                }}
+                tabIndex={0}
+            />
+            <svg
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    // dynamically set pointer events
+                    pointerEvents: tempConnection ? 'auto' : 'none', 
+                }}
+                onKeyDown={handleCanvasKeyDown}
+            >
+                {connections.map(conn => {
+                    const sourceNode = nodes.find(n => n.id === conn.source);
+                    const targetNode = nodes.find(n => n.id === conn.target);
+                    if (sourceNode && targetNode) {
+                        return (
+                            <Connection
+                                key={conn.id}
+                                id={conn.id}
+                                x1={sourceNode.x + 60 + pan.x}
+                                y1={sourceNode.y + 45 + pan.y}
+                                x2={targetNode.x + 60 + pan.x}
+                                y2={targetNode.y + 45 + pan.y}
+                                setConnections={setConnections}
+                            />
+                        );
+                    }
+                    return null;
+                })}
+                { tempConnection && (
+                    <line
+                        x1 = {tempConnection.x1 + pan.x}
+                        y1 = {tempConnection.y1 + pan.y}
+                        x2 = {tempConnection.x2}
+                        y2 = {tempConnection.y2}
+                        stroke="black"
+                        strokeWidth="2"
+                    />
+                )}
+            </svg>
+            {nodes.map(node => (
+                <FlowchartNode
+                    key={node.id}
+                    id={node.id}
+                    x={node.x + pan.x}
+                    y={node.y + pan.y}
+                    text={node.text}
+                    tabIndex={0}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                    handleConnectionMouseDown={handleConnectionMouseDown}
+                    handleNodeKeyDown={handleNodeKeyDown}
+                    isSelected={selectedConnectionSource === node.id}
+                    isEditing={editingNodeId === node.id}
+                    handleNodeTextChange={handleNodeTextChange}
+                    handleDoubleClick={handleDoubleClick}
+                    handleBlur={() => setEditingNodeId(null)}
+                    handleContextMenu={handleContextMenu}
+                />
+            ))}
+        </div>
+    );
 };
 
 export default FlowchartCanvas;

@@ -18,6 +18,7 @@ const Connection = ({id, x1, y1, x2, y2, setConnections}) => {
       cursor="pointer"
       onClick={handleDelete}
       tabIndex={0}
+      style={{ pointerEvents: 'auto' }}
     />
   )
 }

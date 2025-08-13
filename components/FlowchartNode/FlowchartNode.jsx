@@ -2,7 +2,7 @@
 import './FlowchartNode.css';
 
 const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
-                        handleBlur}) => {
+                        handleBlur, handleContextMenu}) => {
   // use classnames library or a simple template literal
   const nodeClasses = `flowchart-node ${isSelected ? 'selected-for-connection' : ''}`;
 
@@ -15,6 +15,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
       onMouseDown={onMouseDown}
       onKeyDown={(e) => handleNodeKeyDown(e, id)}
       onDoubleClick={() => handleDoubleClick(id)}
+      onContextMenu={(e) => handleContextMenu(e, id)}
     >
       {
         isEditing ? (
