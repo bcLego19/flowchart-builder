@@ -6,6 +6,7 @@ export const initialState = {
   draggedNodeId: null,
   tempConnection: null,
   selectedConnectionSource: null,
+  selectedConnectionId: null,
 };
 
 export function flowchartReducer(state, action) {
@@ -59,10 +60,16 @@ export function flowchartReducer(state, action) {
         ...state,
         selectedConnectionSource: action.payload.nodeId,
       };
+    case 'SELECT_CONNECTION':
+      return {
+        ...state,
+        selectedConnectionId: action.payload.id,
+      };
     case 'CLEAR_SELECTION':
       return {
         ...state,
         selectedConnectionSource: null,
+        selectedConnectionId: null,
         editingNodeId: null,
         contextMenu: {visible: false, x: 0, y: 0, nodeId: null},
       };

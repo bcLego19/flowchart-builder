@@ -7,11 +7,15 @@ import ContextMenu from '../ContextMenu/ContextMenu.jsx';
 
 const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
     const [state, dispatch] = useReducer(flowchartReducer, initialState);
-    const { mode, pan, startMouse, draggedNodeId, tempConnection, selectedConnectionSource } = state;
+    const { mode, pan, startMouse, draggedNodeId, tempConnection, selectedConnectionSource, selectedConnectionId } = state;
     const isPanning = mode === 'panning';
 
     const [editingNodeId, setEditingNodeId] = useState(null);
     const [contextMenu, setContextMenu] = useState({visible: false, x: 0, y: 0, nodeId: null});
+
+    const handleSelectConnection = useCallback((connectionId) => {
+        dispatch({type: 'SELECT_CONNECTION', payload: {id: connectionId} });
+    }, [dispatch]);
 
     const handleDeleteNode = useCallback((nodeId) => {
         setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId));
@@ -44,11 +48,27 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
     }, []);
     
     // This handler is for the main canvas, so it doesn't need to be in useCallback.
-    const handleCanvasKeyDown = (e) => {
+    const handleCanvasKeyDown = useCallback((e) => {
         if(e.key === 'Escape') {
             dispatch({ type: 'CLEAR_SELECTION' });
+            setEditingNodeId(null);
         }
-    };
+
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+
+            if (selectedConnectionId) {
+
+                setConnections(prev => prev.filter(conn => conn.id !== selectedConnectionId));
+                dispatch({ type: 'CLEAR_SELECTION' });
+
+            } else if (selectedConnectionSource) {
+
+                handleDeleteNode(selectedConnectionSource);
+                dispatch({type: 'CLEAR_SELECTION'});
+
+            }
+        }
+    }, [selectedConnectionSource, selectedConnectionId, setConnections, handleDeleteNode, dispatch]);
     
     // Correctly wrap the handlers that will be passed to the memoized FlowchartNode
     const handleNodeKeyDownCallback = useCallback((e, id) => {
@@ -133,9 +153,17 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
 
     const handleMouseDown = (e) => {
         if (e.button === 0) {
+            // prevent clearing selection if node or connection is clicked
+            // console.log(`target tag name: ${e.target.tagName}`);
+            if (e.target.closest('.flowchart-node') || e.target.tagName === 'line') {
+                // console.log('returning early from mouse down');
+                return;
+            }
+
             if (e.target.id === 'flowchart-canvas-div') {
                 dispatch({ type: 'PAN_START', payload: { startMouse: { x: e.clientX, y: e.clientY } } });
             }
+
             dispatch({ type: 'CLEAR_SELECTION' });
             setEditingNodeId(null);
             setContextMenu(prev => ({ ...prev, visible: false }));
@@ -143,7 +171,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
     };
 
     const handleOuterDivClick = (e) => {
-        if (!e.target.closest('.flowchart-node') && !e.target.closest('.context-menu')) {
+        if (!e.target.closest('.flowchart-node') && !e.target.closest('.context-menu') && !e.target.closest('line')) {
             dispatch({ type: 'CLEAR_SELECTION' });
         }
     };
@@ -162,6 +190,8 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onKeyDown={handleCanvasKeyDown}
+            tabIndex={0}
         >
             {contextMenu.visible && (
                 <ContextMenu
@@ -192,7 +222,6 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                     height: '100%',
                     pointerEvents: tempConnection ? 'auto' : 'none',
                 }}
-                onKeyDown={handleCanvasKeyDown}
             >
                 {connections.map(conn => {
                     const sourceNode = nodes.find(n => n.id === conn.source);
@@ -207,6 +236,8 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                                 x2={targetNode.x + 60 + pan.x}
                                 y2={targetNode.y + 45 + pan.y}
                                 setConnections={setConnections}
+                                onSelectConnection={() => handleSelectConnection(conn.id)}
+                                isSelected={selectedConnectionId === conn.id}
                             />
                         );
                     }

@@ -7,6 +7,20 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
   // use classnames library or a simple template literal
   const nodeClasses = `flowchart-node ${isSelected ? 'selected-for-connection' : ''}`;
 
+  const handleKeyDown = (e) => {
+    // check for shift + f10 key (standard shortcut for context menus)
+    if (e.shiftKey && e.key === 'F10') {
+      e.preventDefault();
+
+      const nodeRect = e.currentTarget.getBoundingClientRect();
+      const x = nodeRect.left + 20;
+      const y = nodeRect.top + 20;
+      handleContextMenu({clientX: x, clientY: y, preventDefault: () => {} }, id);
+    } else {
+      handleNodeKeyDown(e,id);
+    }
+  }
+
   return (
     <div
       className={nodeClasses}
@@ -14,7 +28,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
       id={id}
       style={{ left: x, top: y }}
       onMouseDown={onMouseDown}
-      onKeyDown={(e) => handleNodeKeyDown(e, id)}
+      onKeyDown={handleKeyDown}
       onDoubleClick={() => handleDoubleClick(id)}
       onContextMenu={(e) => handleContextMenu(e, id)}
     >

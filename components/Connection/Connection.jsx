@@ -1,9 +1,6 @@
 import React, { Component } from "react";
 
-const Connection = ({id, x1, y1, x2, y2, setConnections}) => {
-  const handleDelete = () => {
-    setConnections(prev => prev.filter(conn => conn.id !== id));
-  };
+const Connection = ({id, x1, y1, x2, y2, onSelectConnection, isSelected}) => {
 
   return (
     <line 
@@ -13,10 +10,10 @@ const Connection = ({id, x1, y1, x2, y2, setConnections}) => {
       y1={y1}
       x2={x2}
       y2={y2}
-      stroke="black"
-      strokeWidth="5"
+      stroke={isSelected ? "dodgerblue" : "black"}
+      strokeWidth={isSelected ? "7" : "5"}
       cursor="pointer"
-      onClick={handleDelete}
+      onClick={() => onSelectConnection(id)}
       tabIndex={0}
       style={{ pointerEvents: 'auto' }}
     />
