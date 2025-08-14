@@ -1,5 +1,6 @@
 // FlowchartNode.jsx file
 import './FlowchartNode.css';
+import React from 'react';
 
 const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
                         handleBlur, handleContextMenu}) => {
@@ -39,4 +40,4 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
   );
 };
 
-export default FlowchartNode;
+export default React.memo(FlowchartNode);

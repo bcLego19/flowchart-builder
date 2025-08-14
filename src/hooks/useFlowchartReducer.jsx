@@ -63,6 +63,8 @@ export function flowchartReducer(state, action) {
       return {
         ...state,
         selectedConnectionSource: null,
+        editingNodeId: null,
+        contextMenu: {visible: false, x: 0, y: 0, nodeId: null},
       };
     default:
       return state;

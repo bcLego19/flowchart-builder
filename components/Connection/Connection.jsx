@@ -23,4 +23,4 @@ const Connection = ({id, x1, y1, x2, y2, setConnections}) => {
   )
 }
 
-export default Connection;
+export default React.memo(Connection);
