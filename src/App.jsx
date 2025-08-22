@@ -16,8 +16,8 @@ function App() {
   const createNode = () => {
     const newNode = {
       id: `node-${Date.now()}`,
-      x: 400, // default position
-      y: 200,
+      x: 100 + (20 * nodes.length), // default position
+      y: 50 + (20 * nodes.length),
       text: 'New Node',
     };
     setNodes(prevNodes => [...prevNodes, newNode]);
