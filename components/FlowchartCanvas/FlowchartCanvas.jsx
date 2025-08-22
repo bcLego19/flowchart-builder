@@ -13,10 +13,6 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
     const [editingNodeId, setEditingNodeId] = useState(null);
     const [contextMenu, setContextMenu] = useState({visible: false, x: 0, y: 0, nodeId: null});
 
-    const handleSelectConnection = useCallback((connectionId) => {
-        dispatch({type: 'SELECT_CONNECTION', payload: {id: connectionId} });
-    }, [dispatch]);
-
     const handleDeleteNode = useCallback((nodeId) => {
         setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId));
         setConnections(prevConnections =>
@@ -26,6 +22,36 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
         );
         setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
     }, [setNodes, setConnections]);
+
+    const handleDeleteSelection = useCallback(() => {
+        if (selectedConnectionId) {
+            setConnections(prev => prev.filter(conn => conn.id !== selectedConnectionId));
+            dispatch({ type: 'CLEAR_SELECTION'});
+        } else if (selectedConnectionSource) {
+            handleDeleteNode(selectedConnectionSource);
+            dispatch({ type: 'CLEAR_SELECTION'});
+        }
+    }, [selectedConnectionId, selectedConnectionSource, setConnections, handleDeleteNode, dispatch]);
+
+    // Make sure this handler is defined AFTER handleDeleteSelection
+    // And simplify its dependency.
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if(e.key === 'Escape') {
+                dispatch({ type: 'CLEAR_SELECTION' });
+                setEditingNodeId(null);
+            }
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                handleDeleteSelection();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleDeleteSelection, dispatch]);
 
     const handleContextMenu = useCallback((e, nodeId) => {
         e.preventDefault();
@@ -55,20 +81,9 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
         }
 
         if (e.key === 'Delete' || e.key === 'Backspace') {
-
-            if (selectedConnectionId) {
-
-                setConnections(prev => prev.filter(conn => conn.id !== selectedConnectionId));
-                dispatch({ type: 'CLEAR_SELECTION' });
-
-            } else if (selectedConnectionSource) {
-
-                handleDeleteNode(selectedConnectionSource);
-                dispatch({type: 'CLEAR_SELECTION'});
-
-            }
+            handleDeleteSelected();
         }
-    }, [selectedConnectionSource, selectedConnectionId, setConnections, handleDeleteNode, dispatch]);
+    }, [handleDeleteSelection, dispatch]);
     
     // Correctly wrap the handlers that will be passed to the memoized FlowchartNode
     const handleNodeKeyDownCallback = useCallback((e, id) => {

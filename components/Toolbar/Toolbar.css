@@ -1,16 +1,19 @@
-
+/* Toolbar.css file */
 
 .toolbar {
 	width: 200px;
 	background-color: #333;
 	color: #fff;
 	padding: 20px;
-	display: flex;
-	flex-direction: column;
-	gap: 15px;
 }
 
-.add-node-btn {
+.toolbar-content {
+	display: flex;
+	flex-direction: column;
+	gap: 15px; /* Adds space between the buttons */
+}
+
+.toolbar-btn {
 	padding: 10px 15px;
 	font-size: 1rem;
 	background-color: #555;
@@ -21,6 +24,6 @@
 	transition: background-color 0.2s ease;
 }
 
-.add-node-btn:hover {
+.toolbar-btn:hover {
 	background-color: #777;
 }

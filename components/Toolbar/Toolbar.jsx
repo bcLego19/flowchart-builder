@@ -2,11 +2,14 @@
 import './Toolbar.css';
 
 // The toolbar component, which accepts a createNode property
-const Toolbar = ({createNode}) => {
+const Toolbar = ({createNode, onDeleteSelected}) => {
   return (
     <div>
       <h2 className="toolbar">Toolbar</h2>
-      <button className="add-node-btn" onClick={createNode}>Add</button>
+      <div className="toolbar-content">
+        <button className="toolbar-btn" onClick={createNode}>Add</button>
+        <button className="toolbar-btn" onClick={onDeleteSelected}>Delete Selected</button>
+      </div>
     </div>
   );
 };
