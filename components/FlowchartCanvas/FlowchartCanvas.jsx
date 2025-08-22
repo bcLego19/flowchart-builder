@@ -1,148 +1,91 @@
-// src/components/FlowchartCanvas.jsx
-import { useReducer, useState, useCallback, useRef, useEffect } from 'react';
-import { flowchartReducer, initialState } from '../../src/hooks/useFlowchartReducer.jsx';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 import Connection from '../Connection/Connection.jsx';
 import ContextMenu from '../ContextMenu/ContextMenu.jsx';
 
-const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
-    const [state, dispatch] = useReducer(flowchartReducer, initialState);
-    const { mode, pan, startMouse, draggedNodeId, tempConnection, selectedConnectionSource, selectedConnectionId } = state;
-    const isPanning = mode === 'panning';
-
+const FlowchartCanvas = ({ 
+    nodes, setNodes, connections, setConnections, 
+    mode, setMode, pan, setPan, startMouse, setStartMouse, 
+    draggedNodeId, setDraggedNodeId, tempConnection, setTempConnection,
+    selectedConnectionSource, setSelectedConnectionSource,
+    selectedConnectionId, setSelectedConnectionId,
+    onDeleteSelected,
+}) => {
+    // These states are specific to the FlowchartCanvas component's local UI
     const [editingNodeId, setEditingNodeId] = useState(null);
-    const [contextMenu, setContextMenu] = useState({visible: false, x: 0, y: 0, nodeId: null});
-
-    const handleDeleteNode = useCallback((nodeId) => {
-        setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId));
-        setConnections(prevConnections =>
-            prevConnections.filter(conn =>
-                conn.source !== nodeId && conn.target !== nodeId
-            )
-        );
-        setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
-    }, [setNodes, setConnections]);
-
-    const handleDeleteSelection = useCallback(() => {
-        if (selectedConnectionId) {
-            setConnections(prev => prev.filter(conn => conn.id !== selectedConnectionId));
-            dispatch({ type: 'CLEAR_SELECTION'});
-        } else if (selectedConnectionSource) {
-            handleDeleteNode(selectedConnectionSource);
-            dispatch({ type: 'CLEAR_SELECTION'});
-        }
-    }, [selectedConnectionId, selectedConnectionSource, setConnections, handleDeleteNode, dispatch]);
-
-    // Make sure this handler is defined AFTER handleDeleteSelection
-    // And simplify its dependency.
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if(e.key === 'Escape') {
-                dispatch({ type: 'CLEAR_SELECTION' });
-                setEditingNodeId(null);
-            }
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                handleDeleteSelection();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [handleDeleteSelection, dispatch]);
-
-    const handleContextMenu = useCallback((e, nodeId) => {
-        e.preventDefault();
-        setContextMenu({
-            visible: true,
-            x: e.clientX,
-            y: e.clientY,
-            nodeId: nodeId,
-        });
-    }, []);
-
-    const handleNodeTextChange = useCallback((id, newText) => {
-        setNodes(prevNodes => prevNodes.map(node =>
-            node.id === id ? {...node, text: newText} : node
-        ));
-    }, [setNodes]);
-
-    const handleDoubleClick = useCallback((nodeId) => {
-        setEditingNodeId(nodeId);
-    }, []);
     
-    // This handler is for the main canvas, so it doesn't need to be in useCallback.
-    const handleCanvasKeyDown = useCallback((e) => {
-        if(e.key === 'Escape') {
-            dispatch({ type: 'CLEAR_SELECTION' });
-            setEditingNodeId(null);
-        }
-
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            handleDeleteSelected();
-        }
-    }, [handleDeleteSelection, dispatch]);
-    
-    // Correctly wrap the handlers that will be passed to the memoized FlowchartNode
-    const handleNodeKeyDownCallback = useCallback((e, id) => {
-        if(e.key === 'Enter') {
-            e.preventDefault();
-            if(selectedConnectionSource === id) {
-                dispatch({ type: 'CLEAR_SELECTION' });
-            } else if (selectedConnectionSource) {
-                const newConnection = {
-                    id: `conn-${Date.now()}`,
-                    source: selectedConnectionSource,
-                    target: id,
-                };
-                setConnections(prev => [...prev, newConnection]);
-                dispatch({ type: 'CLEAR_SELECTION' });
-            } else {
-                dispatch({ type: 'SELECT_NODE', payload: { nodeId: id } });
-            }
-        }
-    }, [dispatch, selectedConnectionSource, setConnections]);
+    // This handler will now be called from the Connection component
+    const handleSelectConnection = useCallback((id) => {
+        setSelectedConnectionId(id);
+        setSelectedConnectionSource(null); // Deselect any node
+    }, [setSelectedConnectionId, setSelectedConnectionSource]);
 
     const handleNodeMouseDownCallback = useCallback((e, nodeId) => {
         if (e.button === 0) {
             e.stopPropagation();
-            dispatch({ type: 'DRAG_START', payload: { draggedNodeId: nodeId, startMouse: { x: e.clientX, y: e.clientY } } });
+            setMode('dragging');
+            setDraggedNodeId(nodeId);
+            setStartMouse({ x: e.clientX, y: e.clientY });
+            setSelectedConnectionSource(nodeId);
+            setSelectedConnectionId(null);
         }
-    }, [dispatch]);
+    }, [setMode, setDraggedNodeId, setStartMouse, setSelectedConnectionSource, setSelectedConnectionId]);
 
-    // handleConnectionMouseDown is also passed to FlowchartNode
     const handleConnectionMouseDownCallback = useCallback((e, id) => {
         e.stopPropagation();
         const sourceNode = nodes.find(n => n.id === id);
-        const tempConnectionData = {
+        if (!sourceNode) return;
+        setMode('connecting');
+        setTempConnection({
             sourceId: id,
             x1: sourceNode.x + 60,
             y1: sourceNode.y + 45,
             x2: e.clientX - pan.x,
             y2: e.clientY - pan.y,
-        };
-        dispatch({ type: 'CONNECT_START', payload: { tempConnection: tempConnectionData, sourceId: id } });
-    }, [dispatch, nodes, pan.x, pan.y]);
+        });
+        setSelectedConnectionSource(id);
+        setSelectedConnectionId(null);
+    }, [nodes, pan.x, pan.y, setMode, setTempConnection, setSelectedConnectionSource, setSelectedConnectionId]);
+
+    const handleCanvasMouseDown = (e) => {
+        // This handler now correctly deselects everything when the empty canvas is clicked.
+        // The checks for '.flowchart-node' and 'line' prevent it from clearing the selection when you click on a node or connection.
+        if (e.target.closest('.flowchart-node') || e.target.closest('line')) {
+            return;
+        }
+
+        if (e.target.id === 'flowchart-canvas-div') {
+            setMode('panning');
+            setStartMouse({ x: e.clientX, y: e.clientY });
+        }
+        
+        setSelectedConnectionSource(null);
+        setSelectedConnectionId(null);
+        setEditingNodeId(null);
+    };
 
     const handleMouseMove = (e) => {
         if (mode === 'panning') {
-            const dx = e.clientX - state.startMouse.x;
-            const dy = e.clientY - state.startMouse.y;
-            dispatch({ type: 'PAN_MOVE', payload: { pan: { x: state.pan.x + dx, y: state.pan.y + dy }, startMouse: { x: e.clientX, y: e.clientY } } });
+            const dx = e.clientX - startMouse.x;
+            const dy = e.clientY - startMouse.y;
+            setPan(prevPan => ({ x: prevPan.x + dx, y: prevPan.y + dy }));
+            setStartMouse({ x: e.clientX, y: e.clientY });
         } else if (mode === 'dragging') {
-            const dx = e.clientX - state.startMouse.x;
-            const dy = e.clientY - state.startMouse.y;
+            const dx = e.clientX - startMouse.x;
+            const dy = e.clientY - startMouse.y;
             setNodes(prevNodes => prevNodes.map(node => {
-                if (node.id === state.draggedNodeId) {
+                if (node.id === draggedNodeId) {
                     return { ...node, x: node.x + dx, y: node.y + dy };
                 }
                 return node;
             }));
-            dispatch({ type: 'DRAG_MOVE', payload: { startMouse: { x: e.clientX, y: e.clientY } } });
-        } else if (mode === 'connecting') {
-            dispatch({ type: 'CONNECT_MOVE', payload: { tempConnection: { ...state.tempConnection, x2: e.clientX - state.pan.x, y2: e.clientY - state.pan.y } } });
+            setStartMouse({ x: e.clientX, y: e.clientY });
+        } else if (mode === 'connecting' && tempConnection) {
+            setTempConnection(prevTemp => ({
+                ...prevTemp,
+                x2: e.clientX - pan.x,
+                y2: e.clientY - pan.y,
+            }));
         }
     };
 
@@ -163,33 +106,61 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                 }
             }
         }
-        dispatch({ type: 'END_INTERACTION' });
+        setMode('idle');
+        setDraggedNodeId(null);
+        setTempConnection(null);
     };
 
-    const handleMouseDown = (e) => {
-        if (e.button === 0) {
-            // prevent clearing selection if node or connection is clicked
-            // console.log(`target tag name: ${e.target.tagName}`);
-            if (e.target.closest('.flowchart-node') || e.target.tagName === 'line') {
-                // console.log('returning early from mouse down');
-                return;
+    // Keyboard event listener to delete selected items
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if(e.key === 'Escape') {
+                setSelectedConnectionSource(null);
+                setSelectedConnectionId(null);
+                setEditingNodeId(null);
             }
-
-            if (e.target.id === 'flowchart-canvas-div') {
-                dispatch({ type: 'PAN_START', payload: { startMouse: { x: e.clientX, y: e.clientY } } });
+            if ((e.key === 'Delete' || e.key === 'Backspace') && (selectedConnectionId || selectedConnectionSource)) {
+                onDeleteSelected();
             }
+        };
 
-            dispatch({ type: 'CLEAR_SELECTION' });
-            setEditingNodeId(null);
-            setContextMenu(prev => ({ ...prev, visible: false }));
-        }
-    };
+        window.addEventListener('keydown', handleKeyDown);
 
-    const handleOuterDivClick = (e) => {
-        if (!e.target.closest('.flowchart-node') && !e.target.closest('.context-menu') && !e.target.closest('line')) {
-            dispatch({ type: 'CLEAR_SELECTION' });
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedConnectionId, selectedConnectionSource, onDeleteSelected, setSelectedConnectionId, setSelectedConnectionSource]);
+    
+    // Handlers for node and context menu
+    const handleNodeTextChange = useCallback((id, newText) => {
+        setNodes(prevNodes => prevNodes.map(node =>
+            node.id === id ? {...node, text: newText} : node
+        ));
+    }, [setNodes]);
+
+    const handleDoubleClick = useCallback((nodeId) => {
+        setEditingNodeId(nodeId);
+    }, []);
+
+    // These handlers are now simplified and use the props passed from App
+    const handleNodeKeyDownCallback = useCallback((e, id) => {
+        if(e.key === 'Enter') {
+            e.preventDefault();
+            if(selectedConnectionSource === id) {
+                setSelectedConnectionSource(null);
+            } else if (selectedConnectionSource) {
+                const newConnection = {
+                    id: `conn-${Date.now()}`,
+                    source: selectedConnectionSource,
+                    target: id,
+                };
+                setConnections(prev => [...prev, newConnection]);
+                setSelectedConnectionSource(null);
+            } else {
+                setSelectedConnectionSource(id);
+            }
         }
-    };
+    }, [selectedConnectionSource, setSelectedConnectionSource, setConnections]);
 
     return (
         <div
@@ -200,22 +171,12 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                 position: 'relative',
                 overflow: 'hidden',
             }}
-            onClick={handleOuterDivClick}
-            onMouseDown={handleMouseDown}
+            onMouseDown={handleCanvasMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onKeyDown={handleCanvasKeyDown}
             tabIndex={0}
         >
-            {contextMenu.visible && (
-                <ContextMenu
-                    x={contextMenu.x}
-                    y={contextMenu.y}
-                    nodeId={contextMenu.nodeId}
-                    handleDeleteNode={handleDeleteNode}
-                />
-            )}
             <div
                 id='flowchart-canvas-div'
                 style={{
@@ -224,9 +185,8 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                     height: '100%',
                     backgroundColor: 'lightgray',
                     transform: `translate(${pan.x}px, ${pan.y}px)`,
-                    cursor: isPanning ? 'grabbing' : 'grab',
+                    cursor: mode === 'panning' ? 'grabbing' : 'grab',
                 }}
-                tabIndex={0}
             />
             <svg
                 style={{
@@ -250,8 +210,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                                 y1={sourceNode.y + 45 + pan.y}
                                 x2={targetNode.x + 60 + pan.x}
                                 y2={targetNode.y + 45 + pan.y}
-                                setConnections={setConnections}
-                                onSelectConnection={() => handleSelectConnection(conn.id)}
+                                onSelectConnection={handleSelectConnection}
                                 isSelected={selectedConnectionId === conn.id}
                             />
                         );
@@ -284,8 +243,7 @@ const FlowchartCanvas = ({ nodes, setNodes, connections, setConnections }) => {
                     isEditing={editingNodeId === node.id}
                     handleNodeTextChange={handleNodeTextChange}
                     handleDoubleClick={handleDoubleClick}
-                    handleBlur={() => setEditingNodeId(null)} // <-- This can also be wrapped
-                    handleContextMenu={handleContextMenu}
+                    handleBlur={() => setEditingNodeId(null)}
                 />
             ))}
         </div>
