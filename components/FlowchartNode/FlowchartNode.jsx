@@ -30,7 +30,6 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
       onMouseDown={onMouseDown}
       onKeyDown={handleKeyDown}
       onDoubleClick={() => handleDoubleClick(id)}
-      onContextMenu={(e) => handleContextMenu(e, id)}
     >
       {
         isEditing ? (
