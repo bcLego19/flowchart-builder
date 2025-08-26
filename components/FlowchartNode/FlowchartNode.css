@@ -17,7 +17,7 @@
     z-index: 10; /* Higher z-index for the node being dragged */
 }
 
-.flowchart-node.selected-for-connection {
+.flowchart-node.selected {
   box-shadow: 0 0 15px 5px rgba(0, 123, 255, 0.7); /* A blue glow */
   border-color: #007bff; /* A blue border */
 }

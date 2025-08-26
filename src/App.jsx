@@ -73,6 +73,7 @@ function App() {
                     setSelectedConnectionSource={setSelectedConnectionSource}
                     selectedConnectionId={selectedConnectionId}
                     setSelectedConnectionId={setSelectedConnectionId}
+                    onDeleteSelected={handleDeleteSelection}
                 />
             </div>
         </>

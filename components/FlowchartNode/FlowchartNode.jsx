@@ -5,7 +5,7 @@ import React from 'react';
 const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
                         handleBlur, handleContextMenu}) => {
   // use classnames library or a simple template literal
-  const nodeClasses = `flowchart-node ${isSelected ? 'selected-for-connection' : ''}`;
+  const nodeClasses = `flowchart-node ${isSelected ? 'selected' : ''}`;
 
   const handleKeyDown = (e) => {
     // check for shift + f10 key (standard shortcut for context menus)
@@ -30,6 +30,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
       onMouseDown={onMouseDown}
       onKeyDown={handleKeyDown}
       onDoubleClick={() => handleDoubleClick(id)}
+      aria-label={`Flowchart Node: ${text}`}
     >
       {
         isEditing ? (
@@ -48,6 +49,7 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
         className="connection-point"
         tabIndex={0}
         onMouseDown={(e) => handleConnectionMouseDown(e, id)}
+        aria-label={`Connection point: ${text}`}
       />
     </div>
   );

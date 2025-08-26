@@ -6,8 +6,8 @@ const Toolbar = ({ createNode, onDeleteSelected }) => {
     <div>
       <h2 className="toolbar-header">Toolbar</h2>
       <div className="toolbar-content">
-        <button className="toolbar-btn" onClick={createNode}>Add</button>
-        <button className="toolbar-btn" onClick={onDeleteSelected}>Delete Selected</button>
+        <button className="toolbar-btn" onClick={createNode} aria-label="Add new node">Add</button>
+        <button className="toolbar-btn" onClick={onDeleteSelected} aria-label="Delete selected node or connection">Delete Selected</button>
       </div>
     </div>
   );
