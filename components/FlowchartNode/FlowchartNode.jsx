@@ -3,7 +3,7 @@ import './FlowchartNode.css';
 import React from 'react';
 
 const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
-                        handleBlur, handleContextMenu}) => {
+                        handleBlur}) => {
   // use classnames library or a simple template literal
   const nodeClasses = `flowchart-node ${isSelected ? 'selected' : ''}`;
 
@@ -15,7 +15,6 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
       const nodeRect = e.currentTarget.getBoundingClientRect();
       const x = nodeRect.left + 20;
       const y = nodeRect.top + 20;
-      handleContextMenu({clientX: x, clientY: y, preventDefault: () => {} }, id);
     } else {
       handleNodeKeyDown(e,id);
     }

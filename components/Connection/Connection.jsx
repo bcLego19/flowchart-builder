@@ -4,9 +4,7 @@ const Connection = ({id, x1, y1, x2, y2, onSelectConnection, isSelected, sourceT
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      // prevent default action
       e.preventDefault();
-      // call selection handler function
       onSelectConnection(id);
     }
   }

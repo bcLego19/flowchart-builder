@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 import Connection from '../Connection/Connection.jsx';
-import ContextMenu from '../ContextMenu/ContextMenu.jsx';
 
 const FlowchartCanvas = ({ 
     nodes, setNodes, connections, setConnections, 
@@ -16,15 +15,17 @@ const FlowchartCanvas = ({
 
     const canvasRef = useRef(null);
     
-    // This handler will now be called from the Connection component
     const handleSelectConnection = useCallback((id) => {
-        if (selectedConnectionId === null) {
-            setSelectedConnectionId(id);
-        } else {
+        // If the clicked connection is already selected, deselect it.
+        if (selectedConnectionId === id) {
             setSelectedConnectionId(null);
+        } else {
+            // Otherwise, select the new connection.
+            setSelectedConnectionId(id);
         }
-        setSelectedConnectionSource(null); // Deselect any node
-    }, [setSelectedConnectionId, setSelectedConnectionSource]);
+        // Always deselect any node when a connection is clicked or selected.
+        setSelectedConnectionSource(null);
+    }, [selectedConnectionId, setSelectedConnectionId, setSelectedConnectionSource]);
 
     const handleNodeMouseDownCallback = useCallback((e, nodeId) => {
         if (e.button === 0) {
@@ -162,23 +163,41 @@ const FlowchartCanvas = ({
     }, []);
 
     const handleNodeKeyDownCallback = useCallback((e, id) => {
-        if(e.key === 'Enter') {
+        if (e.key === 'Enter') {
             e.preventDefault();
-            if(selectedConnectionSource === id) {
-                setSelectedConnectionSource(null);
-            } else if (selectedConnectionSource) {
-                const newConnection = {
-                    id: `conn-${Date.now()}`,
-                    source: selectedConnectionSource,
-                    target: id,
-                };
-                setConnections(prev => [...prev, newConnection]);
+            
+            // Always deselect any connection. This logic is correct.
+            setSelectedConnectionId(null);
+
+            // Logic for creating a new connection
+            if (selectedConnectionSource && selectedConnectionSource !== id) {
+                const connectionExists = connections.some(
+                    conn => (conn.source === selectedConnectionSource && conn.target === id) ||
+                            (conn.source === id && conn.target === selectedConnectionSource)
+                );
+
+                if (!connectionExists) {
+                    const newConnection = {
+                        id: `conn-${Date.now()}`,
+                        source: selectedConnectionSource,
+                        target: id,
+                    };
+                    setConnections(prev => [...prev, newConnection]);
+                }
+                // After a connection is made or attempted, the source is always deselected.
                 setSelectedConnectionSource(null);
             } else {
-                setSelectedConnectionSource(id);
+                // Logic for toggling node selection.
+                // If the same node is selected, deselect it.
+                if (selectedConnectionSource === id) {
+                    setSelectedConnectionSource(null);
+                } else {
+                    // If a new node is selected, select it.
+                    setSelectedConnectionSource(id);
+                }
             }
         }
-    }, [selectedConnectionSource, setSelectedConnectionSource, setConnections]);
+    }, [selectedConnectionSource, setSelectedConnectionSource, setSelectedConnectionId, setConnections, connections]);
 
     return (
         <div
