@@ -1,58 +1,22 @@
+// src/components/FlowchartCanvas/FlowchartCanvas.jsx
 import { useState, useCallback, useRef, useEffect } from 'react';
 import FlowchartNode from '../FlowchartNode/FlowchartNode.jsx';
 import Connection from '../Connection/Connection.jsx';
+import { useFlowchart } from '../../src/context/FlowchartContext.jsx';
 
-const FlowchartCanvas = ({ 
-    nodes, setNodes, connections, setConnections, 
-    mode, setMode, pan, setPan, startMouse, setStartMouse, 
-    draggedNodeId, setDraggedNodeId, tempConnection, setTempConnection,
-    selectedConnectionSource, setSelectedConnectionSource,
-    selectedConnectionId, setSelectedConnectionId,
-    onDeleteSelected,
-}) => {
-    // These states are specific to the FlowchartCanvas component's local UI
-    const [editingNodeId, setEditingNodeId] = useState(null);
+const FlowchartCanvas = () => {
+    // Destructure all the necessary state and functions from the context
+    const {
+        nodes, setNodes, connections, setConnections, mode, setMode, pan, setPan,
+        startMouse, setStartMouse, draggedNodeId, setDraggedNodeId, tempConnection,
+        setTempConnection, selectedConnectionSource, setSelectedConnectionSource,
+        selectedConnectionId, setSelectedConnectionId, onDeleteSelected,
+        handleNodeMouseDownCallback, handleConnectionMouseDownCallback,
+        handleNodeTextChange, handleDoubleClick, handleNodeKeyDownCallback,
+        editingNodeId, setEditingNodeId, handleSelectConnection
+    } = useFlowchart();
 
     const canvasRef = useRef(null);
-    
-    const handleSelectConnection = useCallback((id) => {
-        // If the clicked connection is already selected, deselect it.
-        if (selectedConnectionId === id) {
-            setSelectedConnectionId(null);
-        } else {
-            // Otherwise, select the new connection.
-            setSelectedConnectionId(id);
-        }
-        // Always deselect any node when a connection is clicked or selected.
-        setSelectedConnectionSource(null);
-    }, [selectedConnectionId, setSelectedConnectionId, setSelectedConnectionSource]);
-
-    const handleNodeMouseDownCallback = useCallback((e, nodeId) => {
-        if (e.button === 0) {
-            e.stopPropagation();
-            setMode('dragging');
-            setDraggedNodeId(nodeId);
-            setStartMouse({ x: e.clientX, y: e.clientY });
-            setSelectedConnectionSource(nodeId);
-            setSelectedConnectionId(null);
-        }
-    }, [setMode, setDraggedNodeId, setStartMouse, setSelectedConnectionSource, setSelectedConnectionId]);
-
-    const handleConnectionMouseDownCallback = useCallback((e, id) => {
-        e.stopPropagation();
-        const sourceNode = nodes.find(n => n.id === id);
-        if (!sourceNode) return;
-        setMode('connecting');
-        setTempConnection({
-            sourceId: id,
-            x1: sourceNode.x + 60,
-            y1: sourceNode.y + 45,
-            x2: e.clientX - pan.x,
-            y2: e.clientY - pan.y,
-        });
-        setSelectedConnectionSource(id);
-        setSelectedConnectionId(null);
-    }, [nodes, pan.x, pan.y, setMode, setTempConnection, setSelectedConnectionSource, setSelectedConnectionId]);
 
     const handleCanvasMouseDown = (e) => {
         if (e.target.closest('.flowchart-node') || e.target.closest('line')) {
@@ -102,7 +66,6 @@ const FlowchartCanvas = ({
             if(targetNodeElement) {
                 const targetId = targetNodeElement.parentElement.id;
                 if (targetId && targetId !== tempConnection.sourceId) {
-                    // Check if a connection already exists
                     const connectionExists = connections.some(
                         conn => (conn.source === tempConnection.sourceId && conn.target === targetId) ||
                                 (conn.source === targetId && conn.target === tempConnection.sourceId)
@@ -126,7 +89,7 @@ const FlowchartCanvas = ({
 
     // Use effect to focus the canvas whenever a selection is made
     useEffect(() => {
-        if (selectedConnectionId || selectedConnectionSource) {
+        if ((selectedConnectionId || selectedConnectionSource) && canvasRef.current) {
             canvasRef.current.focus();
         }
     }, [selectedConnectionId, selectedConnectionSource]);
@@ -150,54 +113,6 @@ const FlowchartCanvas = ({
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [selectedConnectionId, selectedConnectionSource, onDeleteSelected, setSelectedConnectionId, setSelectedConnectionSource]);
-    
-    // Handlers for node and context menu
-    const handleNodeTextChange = useCallback((id, newText) => {
-        setNodes(prevNodes => prevNodes.map(node =>
-            node.id === id ? {...node, text: newText} : node
-        ));
-    }, [setNodes]);
-
-    const handleDoubleClick = useCallback((nodeId) => {
-        setEditingNodeId(nodeId);
-    }, []);
-
-    const handleNodeKeyDownCallback = useCallback((e, id) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            
-            // Always deselect any connection. This logic is correct.
-            setSelectedConnectionId(null);
-
-            // Logic for creating a new connection
-            if (selectedConnectionSource && selectedConnectionSource !== id) {
-                const connectionExists = connections.some(
-                    conn => (conn.source === selectedConnectionSource && conn.target === id) ||
-                            (conn.source === id && conn.target === selectedConnectionSource)
-                );
-
-                if (!connectionExists) {
-                    const newConnection = {
-                        id: `conn-${Date.now()}`,
-                        source: selectedConnectionSource,
-                        target: id,
-                    };
-                    setConnections(prev => [...prev, newConnection]);
-                }
-                // After a connection is made or attempted, the source is always deselected.
-                setSelectedConnectionSource(null);
-            } else {
-                // Logic for toggling node selection.
-                // If the same node is selected, deselect it.
-                if (selectedConnectionSource === id) {
-                    setSelectedConnectionSource(null);
-                } else {
-                    // If a new node is selected, select it.
-                    setSelectedConnectionSource(id);
-                }
-            }
-        }
-    }, [selectedConnectionSource, setSelectedConnectionSource, setSelectedConnectionId, setConnections, connections]);
 
     return (
         <div
@@ -251,14 +166,14 @@ const FlowchartCanvas = ({
                                 y2={targetNode.y + 45 + pan.y}
                                 onSelectConnection={handleSelectConnection}
                                 isSelected={selectedConnectionId === conn.id}
-                                sourceText={sourceNode.text} // Pass source node text
-                                targetText={targetNode.text} // Pass target node text
+                                sourceText={sourceNode.text}
+                                targetText={targetNode.text}
                             />
                         );
                     }
                     return null;
                 })}
-                { tempConnection && (
+                {tempConnection && (
                     <line
                         x1={tempConnection.x1 + pan.x}
                         y1={tempConnection.y1 + pan.y}

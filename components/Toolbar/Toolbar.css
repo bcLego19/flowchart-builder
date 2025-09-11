@@ -27,3 +27,7 @@
 .toolbar-btn:hover {
 	background-color: #777;
 }
+
+.toolbar-header {
+	color: #eee;
+}
