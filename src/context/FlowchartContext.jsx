@@ -25,6 +25,8 @@ export const FlowchartProvider = ({ children }) => {
     const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
     const [selectedConnectionId, setSelectedConnectionId] = useState(null);
 
+    const MOVE_STEP = 10;
+
     const createNode = useCallback(() => {
         const newNode = {
             id: `node-${Date.now()}`,
@@ -65,15 +67,29 @@ export const FlowchartProvider = ({ children }) => {
     }, [selectedConnectionId, selectedConnectionSource, handleDeleteNode]);
 
     const handleNodeMouseDownCallback = useCallback((e, nodeId) => {
-        if (e.button === 0) {
-            e.stopPropagation();
+        e.stopPropagation();
+        const sourceNode = nodes.find(n => n.id === nodeId);
+        if (!sourceNode) return;
+
+        if (e.shiftKey) {
+            setMode('connecting');
+            setTempConnection({
+                sourceId: nodeId,
+                x1: sourceNode.x + 60, // Center of the node
+                y1: sourceNode.y + 45, // Center of the node
+                x2: e.clientX - pan.x,
+                y2: e.clientY - pan.y,
+            });
+            setSelectedConnectionSource(nodeId);
+            setSelectedConnectionId(null);
+        } else if (e.button === 0) { // Left-click
             setMode('dragging');
             setDraggedNodeId(nodeId);
             setStartMouse({ x: e.clientX, y: e.clientY });
             setSelectedConnectionSource(nodeId);
             setSelectedConnectionId(null);
         }
-    }, [setMode, setDraggedNodeId, setStartMouse, setSelectedConnectionSource, setSelectedConnectionId]);
+    }, [nodes, pan, setMode, setDraggedNodeId, setStartMouse, setSelectedConnectionSource, setSelectedConnectionId, setTempConnection]);
 
     const handleConnectionMouseDownCallback = useCallback((e, id) => {
         e.stopPropagation();
@@ -102,34 +118,66 @@ export const FlowchartProvider = ({ children }) => {
     }, []);
 
     const handleNodeKeyDownCallback = useCallback((e, id) => {
-        if (e.key === 'Enter') {
+        // Prevent the default browser behavior (e.g., scrolling with arrow keys)
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
             e.preventDefault();
-            setSelectedConnectionId(null);
+        }
 
-            if (selectedConnectionSource && selectedConnectionSource !== id) {
-                const connectionExists = connections.some(
-                    conn => (conn.source === selectedConnectionSource && conn.target === id) ||
+        // Get the node we're currently on
+        const currentNode = nodes.find(n => n.id === id);
+        if (!currentNode) return;
+
+        let newX = currentNode.x;
+        let newY = currentNode.y;
+
+        switch (e.key) {
+            case 'ArrowUp':
+                newY -= MOVE_STEP;
+                break;
+            case 'ArrowDown':
+                newY += MOVE_STEP;
+                break;
+            case 'ArrowLeft':
+                newX -= MOVE_STEP;
+                break;
+            case 'ArrowRight':
+                newX += MOVE_STEP;
+                break;
+            case 'Enter':
+                // Existing logic for making connections with Enter
+                if (selectedConnectionSource && selectedConnectionSource !== id) {
+                    const connectionExists = connections.some(
+                        conn => (conn.source === selectedConnectionSource && conn.target === id) ||
                             (conn.source === id && conn.target === selectedConnectionSource)
-                );
-
-                if (!connectionExists) {
-                    const newConnection = {
-                        id: `conn-${Date.now()}`,
-                        source: selectedConnectionSource,
-                        target: id,
-                    };
-                    setConnections(prev => [...prev, newConnection]);
-                }
-                setSelectedConnectionSource(null);
-            } else {
-                if (selectedConnectionSource === id) {
+                    );
+                    if (!connectionExists) {
+                        const newConnection = {
+                            id: `conn-${Date.now()}`,
+                            source: selectedConnectionSource,
+                            target: id,
+                        };
+                        setConnections(prev => [...prev, newConnection]);
+                    }
                     setSelectedConnectionSource(null);
                 } else {
-                    setSelectedConnectionSource(id);
+                    if (selectedConnectionSource === id) {
+                        setSelectedConnectionSource(null);
+                    } else {
+                        setSelectedConnectionSource(id);
+                    }
                 }
-            }
+                break;
+            default:
+                return; // Do nothing for other keys
         }
-    }, [selectedConnectionSource, setSelectedConnectionSource, setSelectedConnectionId, setConnections, connections]);
+
+        // Update the node's position if an arrow key was pressed
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            setNodes(prevNodes => prevNodes.map(node =>
+                node.id === id ? { ...node, x: newX, y: newY } : node
+            ));
+        }
+    }, [nodes, selectedConnectionSource, connections, setNodes, setConnections, setSelectedConnectionSource]);
 
     const onDeleteSelected = useCallback(() => {
         if (selectedConnectionId) {

@@ -61,10 +61,10 @@ const FlowchartCanvas = () => {
     const handleMouseUp = (e) => {
         if (tempConnection) {
             const elementsUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
-            const targetNodeElement = elementsUnderCursor.find(el => el.classList.contains('connection-point'));
+            const targetNodeElement = elementsUnderCursor.find(el => el.classList.contains('flowchart-node'));
             
             if(targetNodeElement) {
-                const targetId = targetNodeElement.parentElement.id;
+                const targetId = targetNodeElement.id;
                 if (targetId && targetId !== tempConnection.sourceId) {
                     const connectionExists = connections.some(
                         conn => (conn.source === tempConnection.sourceId && conn.target === targetId) ||
@@ -122,6 +122,7 @@ const FlowchartCanvas = () => {
                 height: '100vh',
                 position: 'relative',
                 overflow: 'hidden',
+                cursor: mode === 'panning' ? 'grabbing' : mode === 'dragging' ? 'grabbing' : 'grab',
             }}
             onMouseDown={handleCanvasMouseDown}
             onMouseMove={handleMouseMove}
@@ -139,7 +140,7 @@ const FlowchartCanvas = () => {
                     height: '100%',
                     backgroundColor: 'lightgray',
                     transform: `translate(${pan.x}px, ${pan.y}px)`,
-                    cursor: mode === 'panning' ? 'grabbing' : 'grab',
+                    cursor: mode === 'panning' ? 'grabbing' : mode === 'dragging' ? 'grabbing' : 'grab',
                 }}
             />
             <svg
@@ -160,10 +161,10 @@ const FlowchartCanvas = () => {
                             <Connection
                                 key={conn.id}
                                 id={conn.id}
-                                x1={sourceNode.x + 60 + pan.x}
-                                y1={sourceNode.y + 45 + pan.y}
-                                x2={targetNode.x + 60 + pan.x}
-                                y2={targetNode.y + 45 + pan.y}
+                                x1={sourceNode.x + 60}
+                                y1={sourceNode.y + 45}
+                                x2={targetNode.x + 60}
+                                y2={targetNode.y + 45}
                                 onSelectConnection={handleSelectConnection}
                                 isSelected={selectedConnectionId === conn.id}
                                 sourceText={sourceNode.text}
@@ -175,8 +176,8 @@ const FlowchartCanvas = () => {
                 })}
                 {tempConnection && (
                     <line
-                        x1={tempConnection.x1 + pan.x}
-                        y1={tempConnection.y1 + pan.y}
+                        x1={tempConnection.x1}
+                        y1={tempConnection.y1}
                         x2={tempConnection.x2}
                         y2={tempConnection.y2}
                         stroke="black"
@@ -188,8 +189,8 @@ const FlowchartCanvas = () => {
                 <FlowchartNode
                     key={node.id}
                     id={node.id}
-                    x={node.x + pan.x}
-                    y={node.y + pan.y}
+                    x={node.x}
+                    y={node.y}
                     text={node.text}
                     tabIndex={0}
                     onMouseDown={(e) => handleNodeMouseDownCallback(e, node.id)}

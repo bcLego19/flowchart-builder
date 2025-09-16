@@ -44,12 +44,6 @@ const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, 
             <h2>{text}</h2>
           )
       }
-      <div
-        className="connection-point"
-        tabIndex={0}
-        onMouseDown={(e) => handleConnectionMouseDown(e, id)}
-        aria-label={`Connection point: ${text}`}
-      />
     </div>
   );
 };

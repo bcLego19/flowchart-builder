@@ -11,6 +11,8 @@
     text-align: center;
     cursor: grab; 
     z-index: 1;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 .flowchart-node.is-dragging {
@@ -18,8 +20,9 @@
 }
 
 .flowchart-node.selected {
-  box-shadow: 0 0 15px 5px rgba(0, 123, 255, 0.7); /* A blue glow */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* A blue glow */
   border-color: #007bff; /* A blue border */
+  transform: translateY(-2px);
 }
 
 .connection-point {
