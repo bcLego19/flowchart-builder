@@ -21,7 +21,6 @@ export const FlowchartProvider = ({ children }) => {
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [startMouse, setStartMouse] = useState(null);
     const [draggedNodeId, setDraggedNodeId] = useState(null);
-    const [tempConnection, setTempConnection] = useState(null);
     const [selectedConnectionSource, setSelectedConnectionSource] = useState(null);
     const [selectedConnectionId, setSelectedConnectionId] = useState(null);
 
@@ -68,44 +67,18 @@ export const FlowchartProvider = ({ children }) => {
 
     const handleNodeMouseDownCallback = useCallback((e, nodeId) => {
         e.stopPropagation();
-        const sourceNode = nodes.find(n => n.id === nodeId);
-        if (!sourceNode) return;
+        setSelectedConnectionId(null); // Deselect any connection
 
         if (e.shiftKey) {
-            setMode('connecting');
-            setTempConnection({
-                sourceId: nodeId,
-                x1: sourceNode.x + 60, // Center of the node
-                y1: sourceNode.y + 45, // Center of the node
-                x2: e.clientX - pan.x,
-                y2: e.clientY - pan.y,
-            });
             setSelectedConnectionSource(nodeId);
-            setSelectedConnectionId(null);
+            setMode('connecting');
         } else if (e.button === 0) { // Left-click
             setMode('dragging');
             setDraggedNodeId(nodeId);
             setStartMouse({ x: e.clientX, y: e.clientY });
             setSelectedConnectionSource(nodeId);
-            setSelectedConnectionId(null);
         }
-    }, [nodes, pan, setMode, setDraggedNodeId, setStartMouse, setSelectedConnectionSource, setSelectedConnectionId, setTempConnection]);
-
-    const handleConnectionMouseDownCallback = useCallback((e, id) => {
-        e.stopPropagation();
-        const sourceNode = nodes.find(n => n.id === id);
-        if (!sourceNode) return;
-        setMode('connecting');
-        setTempConnection({
-            sourceId: id,
-            x1: sourceNode.x + 60,
-            y1: sourceNode.y + 45,
-            x2: e.clientX - pan.x,
-            y2: e.clientY - pan.y,
-        });
-        setSelectedConnectionSource(id);
-        setSelectedConnectionId(null);
-    }, [nodes, pan.x, pan.y, setMode, setTempConnection, setSelectedConnectionSource, setSelectedConnectionId]);
+    }, [setMode, setDraggedNodeId, setStartMouse, setSelectedConnectionSource, setSelectedConnectionId]);
 
     const handleNodeTextChange = useCallback((id, newText) => {
         setNodes(prevNodes => prevNodes.map(node =>
@@ -191,10 +164,9 @@ export const FlowchartProvider = ({ children }) => {
     // All the state and functions you want to share
     const value = {
         nodes, setNodes, connections, setConnections, mode, setMode,
-        pan, setPan, startMouse, setStartMouse, draggedNodeId, setDraggedNodeId,
-        tempConnection, setTempConnection, selectedConnectionSource, setSelectedConnectionSource,
+        pan, setPan, startMouse, setStartMouse, draggedNodeId, setDraggedNodeId, selectedConnectionSource, setSelectedConnectionSource,
         selectedConnectionId, setSelectedConnectionId, createNode, handleDeleteSelection,
-        handleNodeMouseDownCallback, handleConnectionMouseDownCallback,
+        handleNodeMouseDownCallback,
         handleNodeTextChange, handleDoubleClick, handleNodeKeyDownCallback,
         createNode, handleDeleteSelection, setEditingNodeId, editingNodeId, setEditingNodeId,
         handleSelectConnection, onDeleteSelected
