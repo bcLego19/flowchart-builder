@@ -7,12 +7,14 @@ import { useFlowchart } from '../../src/context/FlowchartContext.jsx';
 const FlowchartCanvas = () => {
     // Destructure all the necessary state and functions from the context
     const {
-        nodes, setNodes, connections, setConnections, mode, setMode, pan, setPan,
-        startMouse, setStartMouse, draggedNodeId, setDraggedNodeId, selectedConnectionSource, setSelectedConnectionSource,
+        nodes, setNodes, connections, setConnectionsAndSave, mode, setMode, pan, setPan,
+        startMouse, setStartMouse, draggedNodeId, setDraggedNodeId,
+        dragStartPos, setDragStartPos, selectedConnectionSource, setSelectedConnectionSource,
         selectedConnectionId, setSelectedConnectionId, onDeleteSelected,
         handleNodeMouseDownCallback,
         handleNodeTextChange, handleDoubleClick, handleNodeKeyDownCallback,
-        editingNodeId, setEditingNodeId, handleSelectConnection
+        editingNodeId, setEditingNodeId, handleSelectConnection,
+        undo, redo, commitNodesForDragging
     } = useFlowchart();
 
     // The temporary connection state is now local to this component
@@ -97,28 +99,49 @@ const FlowchartCanvas = () => {
 
     const handleMouseUp = (e) => {
         if (tempConnection) {
+            console.log("handleMouseUp: Temp connection exists");
             const elementsUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
             const targetNodeElement = elementsUnderCursor.find(el => el.classList.contains('flowchart-node'));
             
             if(targetNodeElement) {
+                console.log("handleMouseUp: target node element exists");
                 const targetId = targetNodeElement.id;
                 if (targetId && targetId !== tempConnection.sourceId) {
+                    console.log("handleMouseUp: target id exists and is strictly equal to the source id of temp connection");
                     const connectionExists = connections.some(
                         conn => (conn.source === tempConnection.sourceId && conn.target === targetId) ||
                                 (conn.source === targetId && conn.target === tempConnection.sourceId)
                     );
 
                     if (!connectionExists) {
+                        console.log("handleMouseUp: connection exists is false");
                         const newConnection = {
                             id: `conn-${Date.now()}`,
                             source: tempConnection.sourceId,
                             target: targetId,
                         };
-                        setConnections(prev => [...prev, newConnection]);
+                        setConnectionsAndSave(prev => [...prev, newConnection]);
                     }
                 }
             }
+
         }
+
+        if (mode === 'dragging' && draggedNodeId) {
+            console.log("handleMouseUp: dragged node id exists while mode is dragging");
+            
+            const movedNode = nodes.find(n => n.id === draggedNodeId);
+            const hasMoved = movedNode && dragStartPos && (
+                Math.abs(movedNode.x - dragStartPos.x) > 1 || 
+                Math.abs(movedNode.y - dragStartPos.y) > 1
+            );
+
+            if (hasMoved) {
+                console.log("handleMouseUp: node has moved");
+                commitNodesForDragging();
+            }
+        }
+
         setMode('idle');
         setDraggedNodeId(null);
         setTempConnection(null);
@@ -246,7 +269,12 @@ const FlowchartCanvas = () => {
                         isEditing={editingNodeId === node.id}
                         handleNodeTextChange={handleNodeTextChange}
                         handleDoubleClick={handleDoubleClick}
-                        handleBlur={() => setEditingNodeId(null)}
+                        handleBlur={() => {
+                            if (editingNodeId === node.id) {
+                                commitNodesForDragging();
+                                setEditingNodeId(null);
+                            }
+                        }}
                     />
                 ))}
             </div>
