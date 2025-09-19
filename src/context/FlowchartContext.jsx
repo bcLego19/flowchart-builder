@@ -258,6 +258,68 @@ export const FlowchartProvider = ({ children }) => {
     // A new, simpler setNodes that just updates state, without saving history (for dragging intermediates)
     const setNodesWithoutSave = setNodes; // Just a rename for clarity
 
+    const exportData = useCallback(() => {
+        // 1. create data object
+        const data = {
+            nodes: nodes,
+            connections: connections,
+            // include a version for future compatability checks
+            version: "1.0.0",
+        };
+
+        // 2. Convert object to json string
+        const jsonString = JSON.stringify(data, null, 2);
+
+        // 3. Create a blob and download link
+        const blob = new Blob([jsonString], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+
+        // 4. Trigger the download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `flowchart-${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+
+        // 5. Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, [nodes, connections]);
+
+    const importData = useCallback((event) => {
+        console.log('importData: get file');
+        const file = event.target.files[0];
+        console.log(`importData: ${ !file ? `file does not exist` : `file exists`}.`);
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+
+                if (importedData.nodes && importedData.connections) {
+                    setNodes(importedData.nodes);
+                    setConnections(importedData.connections);
+
+                    saveHistory(importedData.nodes, importedData.connections);
+
+                    setSelectedConnectionId(null);
+                    setSelectedConnectionSource(null);
+                    setEditingNodeId(null);
+
+                    console.log('Flowchart imported successfully!');
+                } else {
+                    console.error('Invalid file format: missing nodes or connections.');
+                }
+            } catch (error) {
+                console.error('Error parsing JSON file:', error);
+            }
+        }
+
+        reader.readAsText(file);
+    }, [setNodes, setConnections, saveHistory, setSelectedConnectionId, setSelectedConnectionSource, setEditingNodeId]);
+
     // All the state and functions you want to share
     const value = {
         nodes,  
@@ -299,6 +361,8 @@ export const FlowchartProvider = ({ children }) => {
         redo,
         canUndo: historyIndex > 0,
         canRedo: historyIndex < history.length - 1,
+        exportData,
+        importData,
     };
 
     return (
