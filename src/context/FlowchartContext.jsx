@@ -9,12 +9,18 @@ export const useFlowchart = () => {
 	return useContext(FlowchartContext);
 };
 
+export const NODE_TYPES = {
+    PROCESS: 'process',
+    DECISION: 'decision',
+    START_END: 'start_end',
+}
+
 export const FlowchartProvider = ({ children }) => {
     // Add the editingNodeId state to the context
     const [editingNodeId, setEditingNodeId] = useState(null);
 
     const [nodes, setNodes] = useState([
-        { id: 'start-node', x: 200, y: 150, text: 'Start' }
+        { id: 'start-node', x: 200, y: 150, text: 'Start', type: NODE_TYPES.START_END }
     ]);
     const [connections, setConnections] = useState([]);
     const [mode, setMode] = useState('idle');
@@ -81,12 +87,13 @@ export const FlowchartProvider = ({ children }) => {
         });
     }, [getNodes, saveHistory]);
 
-    const createNode = useCallback(() => {
+    const createNode = useCallback((type = NODE_TYPES.PROCESS) => {
         const newNode = {
             id: `node-${Date.now()}`,
             x: 100 + (20 * nodes.length),
             y: 50 + (20 * nodes.length),
-            text: 'New Node',
+            text: type === NODE_TYPES.DECISION ? 'Decision?' : 'New Step',
+            type: type,
         };
         commitNodesAndHistory(prevNodes => [...prevNodes, newNode]);
     }, [nodes.length, commitNodesAndHistory]);

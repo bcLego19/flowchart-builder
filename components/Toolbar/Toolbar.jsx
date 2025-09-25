@@ -1,11 +1,20 @@
 // src/components/Toolbar/Toolbar.jsx
 import './Toolbar.css';
 import { useFlowchart } from '../../src/context/FlowchartContext.jsx';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+
+// Assuming you've exported NODE_TYPES from context or define them here for the UI
+const NODE_TYPES = { 
+    PROCESS: 'process', 
+    DECISION: 'decision', 
+    START_END: 'start_end', 
+};
 
 const Toolbar = () => {
   const { createNode, handleDeleteSelection, undo, redo, canUndo, canRedo, exportData, importData } = useFlowchart();
   const fileInputRef = useRef(null);
+
+  const [showNodeMenu, setShowNodeMenu] = useState(false);
 
   const handleImportClick = () => {
     fileInputRef.current.click();
@@ -21,12 +30,44 @@ const Toolbar = () => {
       }
   };
 
+  const handleCreateNode = (type) => {
+    createNode(type);
+    setShowNodeMenu(false);
+  };
+
   return (
     <div>
       <h2 className="toolbar-header">Toolbar</h2>
       <div className="toolbar-content">
         {/* Existing Buttons */}
-        <button className="toolbar-btn" onClick={createNode} aria-label="Add new node">Add</button>
+        <div className="node-add-container">
+          <button 
+            className="toolbar-btn" 
+            onClick={() => setShowNodeMenu(!showNodeMenu)}
+            aria-label="Add new node"
+          >
+            Add
+          </button>
+          {showNodeMenu && (
+            <div className="node-menu-submenu">
+              <button 
+                className="toolbar-btn submenu-btn" 
+                onClick={() => handleCreateNode(NODE_TYPES.PROCESS)}>
+                Process
+              </button>
+              <button 
+                className="toolbar-btn submenu-btn" 
+                onClick={() => handleCreateNode(NODE_TYPES.DECISION)}>
+                Decision
+              </button>
+              <button 
+                className="toolbar-btn submenu-btn" 
+                onClick={() => handleCreateNode(NODE_TYPES.START_END)}>
+                Start/End
+              </button>
+            </div>
+          )}
+        </div>
         <button className="toolbar-btn" onClick={handleDeleteSelection} aria-label="Delete selected node or connection">Delete Selected</button>
 
         {/* New Undo/Redo Buttons */}
