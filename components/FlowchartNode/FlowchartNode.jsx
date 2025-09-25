@@ -2,10 +2,10 @@
 import './FlowchartNode.css';
 import React from 'react';
 
-const FlowchartNode = ({id, x, y, text, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
+const FlowchartNode = ({id, x, y, text, type, onMouseDown, handleConnectionMouseDown, handleNodeKeyDown, isSelected, isEditing, handleDoubleClick, handleNodeTextChange,
                         handleBlur}) => {
   // use classnames library or a simple template literal
-  const nodeClasses = `flowchart-node ${isSelected ? 'selected' : ''}`;
+  const nodeClasses = `flowchart-node flowchart-node-${type} ${isSelected ? 'selected' : ''}`;
 
   const handleKeyDown = (e) => {
     // check for shift + f10 key (standard shortcut for context menus)

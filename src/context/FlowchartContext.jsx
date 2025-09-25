@@ -88,6 +88,7 @@ export const FlowchartProvider = ({ children }) => {
     }, [getNodes, saveHistory]);
 
     const createNode = useCallback((type = NODE_TYPES.PROCESS) => {
+        console.log(`(context) createNode type: ${type}`);
         const newNode = {
             id: `node-${Date.now()}`,
             x: 100 + (20 * nodes.length),

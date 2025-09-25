@@ -262,6 +262,7 @@ const FlowchartCanvas = () => {
                         x={node.x}
                         y={node.y}
                         text={node.text}
+                        type={node.type}
                         tabIndex={0}
                         onMouseDown={(e) => handleLocalNodeMouseDown(e, node.id)}
                         handleNodeKeyDown={handleNodeKeyDownCallback}

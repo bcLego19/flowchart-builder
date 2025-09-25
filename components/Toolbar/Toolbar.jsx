@@ -31,6 +31,7 @@ const Toolbar = () => {
   };
 
   const handleCreateNode = (type) => {
+    console.log(`(toolbar) handleCreateNode: type is ${type}`);
     createNode(type);
     setShowNodeMenu(false);
   };
