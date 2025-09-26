@@ -15,6 +15,12 @@ export const NODE_TYPES = {
     START_END: 'start_end',
 }
 
+export const NODE_DIMENSIONS = {
+    [NODE_TYPES.PROCESS]: { width: 120, height: 90 },
+    [NODE_TYPES.DECISION]: { width: 120, height: 90 },
+    [NODE_TYPES.START_END]: { width: 120, height: 90 },
+}
+
 export const FlowchartProvider = ({ children }) => {
     // Add the editingNodeId state to the context
     const [editingNodeId, setEditingNodeId] = useState(null);
@@ -351,6 +357,14 @@ export const FlowchartProvider = ({ children }) => {
         setPan({ x: newPanX, y: newPanY });
     }, [zoom, pan]);
 
+    const getCenterCoordinates = (node) => {
+        const dims = NODE_DIMENSIONS[node.type] || { width: 120, height: 90 };
+        return {
+            x: node.x + (dims.width / 2),
+            y: node.y + (dims.height / 2),
+        };
+    };
+
     // All the state and functions you want to share
     const value = {
         nodes,  
@@ -396,6 +410,7 @@ export const FlowchartProvider = ({ children }) => {
         canRedo: historyIndex < history.length - 1,
         exportData,
         importData,
+        getCenterCoordinates,
     };
 
     return (

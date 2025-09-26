@@ -15,6 +15,7 @@ const FlowchartCanvas = () => {
         handleNodeTextChange, handleDoubleClick, handleNodeKeyDownCallback,
         editingNodeId, setEditingNodeId, handleSelectConnection,
         undo, redo, commitNodesForDragging, zoom, handleZoom,
+        getCenterCoordinates,
     } = useFlowchart();
 
     // The temporary connection state is now local to this component
@@ -47,17 +48,14 @@ const FlowchartCanvas = () => {
             const sourceNode = nodes.find(n => n.id === nodeId);
             if (!sourceNode) return;
 
-            // Calculate starting coordinates relative to the panned canvas
-            // This is the correct coordinate system to match the nodes
-            const startX = sourceNode.x + 60;
-            const startY = sourceNode.y + 45;
+            const center = getCenterCoordinates(sourceNode);
 
             setTempConnection({
                 sourceId: nodeId,
-                x1: startX,
-                y1: startY,
-                x2: startX, // Set initial endpoint to be the same as the start
-                y2: startY,
+                x1: center.x,
+                y1: center.y,
+                x2: center.x, // Set initial endpoint to be the same as the start
+                y2: center.y,
             });
         }
     };
@@ -232,14 +230,17 @@ const FlowchartCanvas = () => {
                         const sourceNode = nodes.find(n => n.id === conn.source);
                         const targetNode = nodes.find(n => n.id === conn.target);
                         if (sourceNode && targetNode) {
+                            const sourceCenter = getCenterCoordinates(sourceNode);
+                            const targetCenter = getCenterCoordinates(targetNode);
+
                             return (
                                 <Connection
                                     key={conn.id}
                                     id={conn.id}
-                                    x1={sourceNode.x + 60}
-                                    y1={sourceNode.y + 45}
-                                    x2={targetNode.x + 60}
-                                    y2={targetNode.y + 45}
+                                    x1={sourceCenter.x}
+                                    y1={sourceCenter.y}
+                                    x2={targetCenter.x}
+                                    y2={targetCenter.y}
                                     onSelectConnection={handleSelectConnection}
                                     isSelected={selectedConnectionId === conn.id}
                                     sourceText={sourceNode.text}
