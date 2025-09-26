@@ -14,7 +14,7 @@ const FlowchartCanvas = () => {
         handleNodeMouseDownCallback,
         handleNodeTextChange, handleDoubleClick, handleNodeKeyDownCallback,
         editingNodeId, setEditingNodeId, handleSelectConnection,
-        undo, redo, commitNodesForDragging
+        undo, redo, commitNodesForDragging, zoom, handleZoom,
     } = useFlowchart();
 
     // The temporary connection state is now local to this component
@@ -69,15 +69,19 @@ const FlowchartCanvas = () => {
             setPan(prevPan => ({ x: prevPan.x + dx, y: prevPan.y + dy }));
             setStartMouse({ x: e.clientX, y: e.clientY });
         } else if (mode === 'dragging') {
-            const dx = e.clientX - startMouse.x;
-            const dy = e.clientY - startMouse.y;
+
+            const dx = (e.clientX - startMouse.x) / zoom;
+            const dy = (e.clientY - startMouse.y) / zoom;
+
             setNodes(prevNodes => prevNodes.map(node => {
                 if (node.id === draggedNodeId) {
                     return { ...node, x: node.x + dx, y: node.y + dy };
                 }
                 return node;
             }));
+
             setStartMouse({ x: e.clientX, y: e.clientY });
+
         } else if (mode === 'connecting' && tempConnection) {
             // Get the bounding rectangle of the SVG to correct the mouse coordinates
             // This is already correct
@@ -86,8 +90,8 @@ const FlowchartCanvas = () => {
             const svgRect = svgElement.getBoundingClientRect();
 
             // Calculate the mouse position relative to the SVG, subtracting the pan
-            const adjustedX = (e.clientX - svgRect.left) - pan.x;
-            const adjustedY = (e.clientY - svgRect.top) - pan.y;
+            const adjustedX = ((e.clientX - svgRect.left) - pan.x) / zoom;
+            const adjustedY = ((e.clientY - svgRect.top) - pan.y) / zoom;
 
             setTempConnection(prevTemp => ({
                 ...prevTemp,
@@ -188,6 +192,7 @@ const FlowchartCanvas = () => {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onWheel={handleZoom}
             tabIndex={0}
             aria-label="Flowchart Canvas"
         >
@@ -198,7 +203,7 @@ const FlowchartCanvas = () => {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    transform: `translate(${pan.x}px, ${pan.y}px)`,
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                 }}
             >
                 <div

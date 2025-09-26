@@ -34,6 +34,8 @@ export const FlowchartProvider = ({ children }) => {
     const [history, setHistory] = useState([{ nodes, connections }]);
     const [historyIndex, setHistoryIndex] = useState(0);
 
+    const [zoom, setZoom] = useState(1);
+
     const MOVE_STEP = 10;
 
     const getNodes = useCallback(() => nodes, [nodes]);
@@ -328,6 +330,27 @@ export const FlowchartProvider = ({ children }) => {
         reader.readAsText(file);
     }, [setNodes, setConnections, saveHistory, setSelectedConnectionId, setSelectedConnectionSource, setEditingNodeId]);
 
+    const handleZoom = useCallback((event) => {
+        event.preventDefault();
+
+        const ZOOM_STEP = 0.05;
+        const direction = event.deltaY > 0 ? -1 : 1;
+
+        const newZoom = Math.min(Math.max(0.2, zoom + (direction * ZOOM_STEP)), 2);
+
+        const delta = newZoom / zoom; // zoom out vs zoom in
+
+        const rect = event.currentTarget.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const newPanX = pan.x - (mouseX - pan.x) * (delta - 1);
+        const newPanY = pan.y - (mouseY - pan.y) * (delta - 1);
+
+        setZoom(newZoom);
+        setPan({ x: newPanX, y: newPanY });
+    }, [zoom, pan]);
+
     // All the state and functions you want to share
     const value = {
         nodes,  
@@ -337,6 +360,8 @@ export const FlowchartProvider = ({ children }) => {
         setMode, 
         pan, 
         setPan, 
+        zoom,
+        handleZoom,
         startMouse, 
         setStartMouse, 
         draggedNodeId, 
