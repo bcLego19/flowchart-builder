@@ -1,5 +1,7 @@
 // src/context/FlowchartContext.jsx
 import React, { createContext, useState, useCallback, useContext } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // create the context
 const FlowchartContext = createContext();
@@ -57,11 +59,6 @@ export const FlowchartProvider = ({ children }) => {
         // Set index to the last element of the newly created array
         setHistoryIndex(updatedHistory.length - 1);
     }, [history, historyIndex]);
-
-    // const setNodesAndSave = useCallback((newNodes) => {
-    //     setNodes(newNodes);
-    //     saveHistory(newNodes, connections);
-    // }, [connections, saveHistory]);
 
     // New helper to get the current state of connections for a functional update
     // This is only necessary because React state updates are batched and asynchronous.
@@ -365,6 +362,73 @@ export const FlowchartProvider = ({ children }) => {
         };
     };
 
+    const getFlowchartContainer = () => {
+        return document.getElementById('flowchart-canvas-outer-div').firstChild;
+    }
+
+    const exportPNG = useCallback(async () => {
+        const container = getFlowchartContainer();
+        if (!container) return;
+
+        try {
+            const canvas = await html2canvas(container, {
+                useCORS: true,
+                scale: 2,
+            });
+
+            // start download
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `flowchart-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            console.log('Flowchart exported to PNG successfully!');
+        } catch (error) {
+            console.error(`Error exporting to PNG: [${error}]`);
+        }
+    });
+
+    const exportPDF = useCallback(async () => {
+        const container = getFlowchartContainer();
+        if (!container) return;
+
+        try {
+            const canvas = await html2canvas(container, {
+                useCORS: true,
+                scale: 2,
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210;
+            const pageHeight = 295;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+
+            // init jsPDF document in portrait with mm units and A4 size
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            let position = 0;
+
+            // handle multi page export if the image is too long
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(`flowchart-${Date.now()}.pdf`);
+            console.log('Flowchart successfully exported to PDF!');
+
+        } catch (error) {
+            console.error(`Error exporting to PDF: [${error}]`);
+        }
+    });
+
     // All the state and functions you want to share
     const value = {
         nodes,  
@@ -408,6 +472,8 @@ export const FlowchartProvider = ({ children }) => {
         exportData,
         importData,
         getCenterCoordinates,
+        exportPNG,
+        exportPDF,
     };
 
     return (

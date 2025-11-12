@@ -11,10 +11,12 @@ const NODE_TYPES = {
 };
 
 const Toolbar = () => {
-  const { createNode, handleDeleteSelection, undo, redo, canUndo, canRedo, exportData, importData } = useFlowchart();
+  const { createNode, handleDeleteSelection, undo, redo, canUndo, canRedo, exportData, importData, exportPNG, exportPDF } = useFlowchart();
   const fileInputRef = useRef(null);
 
   const [showNodeMenu, setShowNodeMenu] = useState(false);
+
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleImportClick = () => {
     fileInputRef.current.click();
@@ -35,6 +37,11 @@ const Toolbar = () => {
     createNode(type);
     setShowNodeMenu(false);
   };
+
+  const handleExport = (exportFunc) => {
+    exportFunc();
+    setShowExportMenu(false);
+  }
 
   return (
     <div>
@@ -75,8 +82,36 @@ const Toolbar = () => {
         <button className="toolbar-btn" onClick={undo} disabled={!canUndo} aria-label="Undo last action">Undo</button>
         <button className="toolbar-btn" onClick={redo} disabled={!canRedo} aria-label="Redo last undone action">Redo</button>
 
-        {/* Export Button */}
-        <button className="toolbar-btn" onClick={exportData}>Export JSON</button>
+        {/* REPLACED: Export Dropdown Container */}
+        <div className="node-add-container"> {/* Reusing the class for styling/positioning */}
+          <button
+            className="toolbar-btn"
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            aria-expanded={showExportMenu}
+            aria-label="Export flowchart"
+          >
+            Export 💾
+          </button>
+          {showExportMenu && (
+            <div className="node-menu-submenu"> {/* Reusing the class for styling */}
+              <button
+                className="toolbar-btn submenu-btn"
+                onClick={() => handleExport(exportPNG)}>
+                Export PNG
+              </button>
+              <button
+                className="toolbar-btn submenu-btn"
+                onClick={() => handleExport(exportPDF)}>
+                Export PDF
+              </button>
+              <button
+                className="toolbar-btn submenu-btn"
+                onClick={() => handleExport(exportData)}>
+                Export JSON (Data)
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Import Button (Triggers the hidden input) */}
         <button className="toolbar-btn" onClick={handleImportClick}>Import JSON</button>
