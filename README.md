@@ -1,12 +1,24 @@
-# React + Vite
+# Flowchart Builder
+A browser-based flowchart editor built with React. Supports multi-type nodes, drag-and-drop positioning, keyboard navigation, undo/redo history, and export to JSON, PDF, and PNG.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Live Demo:** Not yet available
 
-Currently, two official plugins are available:
+## Features
+- Create, move, and connect nodes across multiple shape types
+- Full keyboard accessibility with ARIA labels throughout
+- Undo/redo history via useReducer
+- Context menu for node and connection management
+- Additive zoom and canvas panning
+- Import/export flowcharts as JSON; export to PDF and PNG
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack:
+React, JavaScript, CSS Modules
 
-## Expanding the ESLint configuration
+## Development Approach
+This project was built incrementally over 4 months, using Claude as a collaborative tool — not to generate the application wholesale, but to accelerate problem-solving at specific decision points. Architectural choices, component structure, state management patterns, and accessibility implementation were driven by deliberate engineering decisions. The commit history reflects that incremental process.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Notable Engineering Decisions
+- Migrated canvas state to useReducer for predictable mutation and easier undo/redo implementation
+- Used React.memo and a shared context to minimize re-renders across node and connection components
+- Implemented keyboard accessibility from scratch rather than relying on a library, including focus management and ARIA roles for both nodes and connections
+- Chose client-side export (no backend) using canvas serialization for PNG and jsPDF for PDF output
